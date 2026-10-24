@@ -104,7 +104,10 @@ filters/sources.json                URL, лицензии и закреплён�
 - **Проверка:** зафиксирован максимальный N без ошибки и время компиляции. Шаг 5 опирается на эти цифры.
 - **Зависит от:** — (*можно параллельно с шагом 1*)
 
-### 3. Скелет проекта на XcodeGen — M · `[ ]`
+### 3. Скелет проекта на XcodeGen — M · `[x]`
+
+> **Итог (2026-10-24):** `project.yml` → `Rinse_iOS`/`Rinse_macOS` + `RinseYouTube` + `RinseAds`, команда S37Z4QU5FT, bundle `com.nikolaikushner.rinse`. Обе сборки подписаны и собираются, на Mac расширения зарегистрированы. YouTube-расширение взято из spike, блокер — стартовый список на 78 правил (`scripts/starter-blocklist.py`). App Group и `Config/Signing.xcconfig` пока не нужны — отложено до шага 8.
+
 
 - **Файлы:** `project.yml`, `App/RinseApp.swift`, `App/ContentView.swift` (заглушка), `Extensions/YouTube/{manifest.json,content.js,page.js}`, `Extensions/YouTube/SafariWebExtensionHandler.swift`, `Extensions/Blockers/Ads/{ContentBlockerRequestHandler.swift,blockerList.json}`, `Shared/AppGroup.swift`, `*.entitlements`, `.gitignore`, `README.md`, `CLAUDE.md` (как собирать и проверять).
 - **Что делает:** мультиплатформенное приложение, одно веб-расширение (пока пустое: `console.log`) и один блокер с тремя тестовыми правилами, общий App Group, `DEVELOPMENT_TEAM` вынесен в `Config/Signing.xcconfig` (в `.gitignore`, есть пример `Signing.example.xcconfig`).

@@ -1,0 +1,85 @@
+name: Rinse
+options:
+  bundleIdPrefix: com.nikolaikushner
+  deploymentTarget:
+    iOS: "18.0"
+    macOS: "15.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: S37Z4QU5FT
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: 0.1.0
+    CURRENT_PROJECT_VERSION: 1
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": Config/macOS.entitlements
+    "ENABLE_HARDENED_RUNTIME[sdk=macosx*]": YES
+
+targets:
+  # Container app: onboarding and extension status. One target per platform (Rinse_iOS, Rinse_macOS).
+  Rinse:
+    type: application
+    platform: [iOS, macOS]
+    sources:
+      - App
+      - Shared
+    settings:
+      base:
+        PRODUCT_NAME: Rinse
+        PRODUCT_BUNDLE_IDENTIFIER: com.nikolaikushner.rinse
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Rinse
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    dependencies:
+      - target: RinseYouTube_${platform}
+      - target: RinseAds_${platform}
+
+  # Safari Web Extension for youtube.com: strips ad payloads from the player, adds PiP and background playback.
+  RinseYouTube:
+    type: app-extension
+    platform: [iOS, macOS]
+    sources:
+      - path: Extensions/YouTube
+        excludes: ["Resources/**", "Info.plist"]
+      - path: Extensions/YouTube/Resources
+        buildPhase: resources
+    info:
+      path: Extensions/YouTube/Info.plist
+      properties:
+        CFBundleDisplayName: Rinse for YouTube
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSHumanReadableDescription: Removes ads from YouTube and adds Picture in Picture and background playback.
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.Safari.web-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SafariWebExtensionHandler
+    settings:
+      base:
+        PRODUCT_NAME: RinseYouTube
+        PRODUCT_BUNDLE_IDENTIFIER: com.nikolaikushner.rinse.youtube
+
+  # Content Blocker for the whole web: network and element-hiding rules from blockerList.json.
+  RinseAds:
+    type: app-extension
+    platform: [iOS, macOS]
+    sources:
+      - path: Extensions/Blockers/Ads
+        excludes: ["Info.plist"]
+    info:
+      path: Extensions/Blockers/Ads/Info.plist
+      properties:
+        CFBundleDisplayName: Rinse Ads
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.Safari.content-blocker
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ContentBlockerRequestHandler
+    settings:
+      base:
+        PRODUCT_NAME: RinseAds
+        PRODUCT_BUNDLE_IDENTIFIER: com.nikolaikushner.rinse.ads
