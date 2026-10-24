@@ -1,5 +1,5 @@
 // Runs page.js against a stub DOM where YouTube already set ytInitialPlayerResponse
-// (the late-injection case on iOS). It must not throw and must prune + render the badge.
+// (the late-injection case on iOS). It must not throw, must prune, and must report to content.js.
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
@@ -37,6 +37,7 @@ vm.runInContext("globalThis.fetch = window.fetch; Object.defineProperty(globalTh
 vm.runInContext(readFileSync(new URL("../../../Extensions/YouTube/Resources/page.js", import.meta.url), "utf8"), ctx);
 
 const pr = window.ytInitialPlayerResponse;
-const ok = !("adPlacements" in pr) && !("playerAds" in pr) && /rinse ✓ · pruned 2/.test(badgeEl.firstChild.textContent);
-console.log(ok ? "PASS" : "FAIL", JSON.stringify(pr), "|", badgeEl.firstChild.textContent);
+const reported = JSON.parse(document.documentElement.dataset.rinsePage);
+const ok = !("adPlacements" in pr) && !("playerAds" in pr) && reported.pruned === 2;
+console.log(ok ? "PASS" : "FAIL", JSON.stringify(pr), "| data-rinse-page:", document.documentElement.dataset.rinsePage);
 process.exit(ok ? 0 : 1);

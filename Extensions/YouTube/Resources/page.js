@@ -1,18 +1,17 @@
-// Page script (runs in YouTube's own JS world).
+// Page script: runs in YouTube's own JS world, injected by content.js.
+// Does only what needs YouTube's JS world:
 // 1. Prunes ad payloads out of player responses (initial page data, fetch, XHR).
-// 2. Keeps playback alive in the background: hides visibility changes from YouTube
-//    and resumes the video when iOS pauses it on going to the background.
-// 3. Adds a PiP button for Safari.
-// Everything logs with a [rinse] prefix; open Web Inspector to read it.
+// 2. Hides "page went to the background" signals from YouTube's code, so it doesn't pause.
+// Everything else (badge, ad skipping, background resume, PiP) lives in content.js, which
+// still works if YouTube's CSP blocks this file.
+// Reports to content.js through <html data-rinse-page="…">. Logs with a [rinse] prefix.
 (() => {
-  if (document.documentElement.dataset.rinse) return;
-  document.documentElement.dataset.rinse = "1";
+  const root = document.documentElement;
+  if (root.dataset.rinsePage) return;
   const log = (...a) => console.log("[rinse]", ...a);
-  // All state lives up here: badge() reads it, and prune() can call badge() before the rest of this file has run.
-  const stats = { pruned: 0, sources: {} };
-  const bg = { hiddenAt: 0, resumed: 0, failed: 0 };
-  const ads = { skipped: 0, active: false, saved: null };
-  let el; // badge element
+  const stats = { pruned: 0 };
+  const publish = () => { root.dataset.rinsePage = JSON.stringify(stats); };
+  publish();
 
   const AD_KEYS = ["adPlacements", "adSlots", "playerAds", "adBreakHeartbeatParams"];
   function prune(obj, source) {
@@ -24,9 +23,8 @@
     }
     if (hit) {
       stats.pruned += hit;
-      stats.sources[source] = (stats.sources[source] || 0) + hit;
-      log(`pruned ${hit} ad keys from ${source}`, stats);
-      badge();
+      log(`pruned ${hit} ad keys from ${source}`);
+      publish();
     }
     return obj;
   }
@@ -73,21 +71,8 @@
     return origOpen.call(this, method, url, ...rest);
   };
 
-  // Background playback. Two things pause the video when Safari goes to the background:
-  // 1. YouTube's own code, reacting to visibility/focus signals: we hide those from it.
-  // 2. iOS WebKit itself, which pauses <video> when the page is hidden: we resume right after.
-  //    Only pauses within RESUME_WINDOW_MS of going hidden are undone, so pausing from the
-  //    lock screen or Control Center later still works.
-  const RESUME_WINDOW_MS = 2000;
-  const realHidden = Object.getOwnPropertyDescriptor(Document.prototype, "hidden").get;
-  const isReallyHidden = () => realHidden.call(document);
-
-  // On window in the capture phase and registered before the blockers below, so it runs first.
-  window.addEventListener("visibilitychange", () => {
-    bg.hiddenAt = isReallyHidden() ? performance.now() : 0;
-    log("real visibility:", isReallyHidden() ? "hidden" : "visible");
-  }, true);
-
+  // YouTube pauses when it sees the page hidden or unfocused. These overrides only affect
+  // YouTube's JS world; content.js still sees the real values.
   for (const [prop, value] of [["hidden", false], ["webkitHidden", false], ["visibilityState", "visible"], ["webkitVisibilityState", "visible"]]) {
     Object.defineProperty(Document.prototype, prop, { get: () => value, configurable: true });
   }
@@ -97,134 +82,5 @@
     document.addEventListener(ev, (e) => e.stopImmediatePropagation(), true);
   }
 
-  // Media events don't bubble, but they do reach document in the capture phase.
-  document.addEventListener("pause", (e) => {
-    const v = e.target;
-    if (!(v instanceof HTMLVideoElement) || v.ended || !isReallyHidden()) return;
-    if (!bg.hiddenAt || performance.now() - bg.hiddenAt > RESUME_WINDOW_MS) return;
-    log("paused by going to background, resuming");
-    resume(v, [0, 250, 1000, 2500]);
-  }, true);
-
-  function resume(v, delays) {
-    const [delay, ...rest] = delays;
-    setTimeout(() => {
-      if (!v.paused) return;
-      v.play().then(() => {
-        bg.resumed++;
-        log("background resume ok");
-        badge();
-      }).catch((err) => {
-        if (rest.length) return resume(v, rest);
-        bg.failed++;
-        log("background resume failed", err);
-        badge();
-      });
-    }, delay);
-  }
-
-  // WebKit may pause the video a moment *before* the page reports hidden. Remember the last
-  // pause, and undo it if the page goes hidden right after.
-  let lastPause = null;
-  document.addEventListener("pause", (e) => {
-    if (e.target instanceof HTMLVideoElement) lastPause = { v: e.target, t: performance.now() };
-  }, true);
-  window.addEventListener("visibilitychange", () => {
-    if (!isReallyHidden() || !lastPause || performance.now() - lastPause.t > 1500) return;
-    if (lastPause.v.paused && !lastPause.v.ended) {
-      log("paused just before going to background, resuming");
-      resume(lastPause.v, [0, 250, 1000, 2500]);
-    }
-  }, true);
-
-  // Ads that never show up in JSON (m.youtube.com stitches them into the stream): when the
-  // player enters ad mode, mute, fast-forward, jump to the end and press Skip.
-  const SKIP_SELECTORS = [
-    ".ytp-ad-skip-button", ".ytp-ad-skip-button-modern", ".ytp-skip-ad-button",
-    ".ytp-ad-skip-button-slot button", "[id^='skip-button'] button", "button[aria-label^='Skip']",
-  ].join(",");
-  function adPlayer() {
-    return document.querySelector(".html5-video-player.ad-showing, .html5-video-player.ad-interrupting");
-  }
-  function handleAds() {
-    const player = adPlayer();
-    const v = (player || document).querySelector("video");
-    if (player && v) {
-      if (!ads.active) {
-        ads.active = true;
-        ads.saved = { muted: v.muted, rate: v.playbackRate };
-        ads.skipped++;
-        log("ad started, skipping");
-        badge();
-      }
-      v.muted = true;
-      if (v.playbackRate < 16) v.playbackRate = 16;
-      if (Number.isFinite(v.duration) && v.duration > 0 && v.duration < 180 && v.currentTime < v.duration - 0.3) {
-        v.currentTime = v.duration - 0.1;
-      }
-      document.querySelector(SKIP_SELECTORS)?.click();
-    } else if (ads.active) {
-      ads.active = false;
-      if (v && ads.saved) {
-        v.muted = ads.saved.muted;
-        v.playbackRate = ads.saved.rate >= 16 ? 1 : ads.saved.rate;
-      }
-      log("ad finished");
-    }
-  }
-  setInterval(handleAds, 250);
-  new MutationObserver(handleAds).observe(document.documentElement, { attributes: true, attributeFilter: ["class"], subtree: true });
-
-  // Lets iOS keep the video alive in PiP when going home from fullscreen.
-  // YouTube mutates the DOM constantly, so the scan is batched.
-  let scanQueued = false;
-  new MutationObserver(() => {
-    if (scanQueued) return;
-    scanQueued = true;
-    setTimeout(() => {
-      scanQueued = false;
-      for (const v of document.querySelectorAll("video:not([autopictureinpicture])")) {
-        v.setAttribute("autopictureinpicture", "");
-        v.removeAttribute("disablepictureinpicture");
-      }
-    }, 500);
-  }).observe(document.documentElement, { childList: true, subtree: true });
-
-  // Badge + PiP button.
-  function badge() {
-    if (!document.body) return;
-    if (!el) {
-      el = document.createElement("div");
-      el.style.cssText = "position:fixed;z-index:2147483647;right:8px;top:56px;display:flex;gap:6px;font:11px -apple-system,sans-serif;opacity:.85;";
-      const info = document.createElement("span");
-      info.style.cssText = "background:#16a34a;color:#fff;padding:6px 8px;border-radius:8px;";
-      const pip = document.createElement("button");
-      pip.textContent = "PiP";
-      pip.style.cssText = "background:#111;color:#fff;border:0;padding:6px 10px;border-radius:8px;";
-      pip.onclick = togglePip;
-      el.append(info, pip);
-      document.body.append(el);
-    }
-    const parts = [`rinse ✓`, `pruned ${stats.pruned}`, `ads skipped ${ads.skipped}`];
-    if (bg.resumed || bg.failed) parts.push(`bg ${bg.resumed}✓ ${bg.failed}✗`);
-    el.firstChild.textContent = parts.join(" · ");
-  }
-  async function togglePip() {
-    const v = document.querySelector("video");
-    if (!v) return log("no <video> on page");
-    v.removeAttribute("disablepictureinpicture");
-    v.disablePictureInPicture = false;
-    try {
-      if (v.webkitSetPresentationMode) {
-        v.webkitSetPresentationMode(v.webkitPresentationMode === "picture-in-picture" ? "inline" : "picture-in-picture");
-      } else if (document.pictureInPictureElement) await document.exitPictureInPicture();
-      else await v.requestPictureInPicture();
-      log("PiP toggled", v.webkitPresentationMode);
-    } catch (e) {
-      log("PiP failed", e);
-    }
-  }
-  if (document.body) badge();
-  else document.addEventListener("DOMContentLoaded", badge);
   log("page script installed", location.href);
 })();

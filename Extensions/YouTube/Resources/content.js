@@ -1,28 +1,157 @@
-// Runs in the isolated world at document_start.
-// 1. Injects page.js into YouTube's own JS world (Safari ignores "world": "MAIN").
-//    <script src> loads async, so page.js may arrive after YouTube's inline scripts.
-// 2. To cover that race, rewrites the inline script that defines
-//    ytInitialPlayerResponse before it runs, renaming its ad keys.
-//    The log says which of the two won, which is what this spike needs to learn.
-const t0 = performance.now();
+// Content script: runs in Safari's isolated world at document_start on youtube.com.
+// YouTube's CSP can't block it, so everything that only needs the DOM lives here:
+//   - injects page.js (JSON ad pruning, visibility spoofing) and reports whether it ran
+//   - skips ads stitched into the stream: mute, 16x, press Skip
+//   - resumes playback when iOS pauses the video on going to the background
+//   - status badge and PiP button
 const log = (...a) => console.log("[rinse:content]", ...a);
+const root = document.documentElement;
+const state = { page: "loading", pruned: 0, skipped: 0, resumed: 0, failed: 0 };
 
-const s = document.createElement("script");
-s.src = browser.runtime.getURL("page.js");
-s.onload = () => { log(`page.js loaded after ${Math.round(performance.now() - t0)}ms`); s.remove(); };
-(document.head || document.documentElement).append(s);
+// --- page.js injection -------------------------------------------------------------------
+// In the isolated world, document.hidden is the real value: page.js's overrides don't reach here.
+// Registered now, before page.js exists, so page.js's event blockers can't swallow it.
+let hiddenAt = 0;
+let lastPause = null;
+window.addEventListener("visibilitychange", () => {
+  hiddenAt = document.hidden ? performance.now() : 0;
+  if (document.hidden) resumeIfPausedBy("pause just before going to background", lastPause, 1500);
+}, true);
 
-const AD_KEY_RE = /"(adPlacements|adSlots|playerAds|adBreakHeartbeatParams)":/g;
-let rewritten = 0;
-new MutationObserver((records) => {
-  for (const r of records) for (const node of r.addedNodes) {
-    if (node.nodeName !== "SCRIPT" || node.src || !node.textContent.includes("ytInitialPlayerResponse")) continue;
-    const before = node.textContent;
-    const after = before.replace(AD_KEY_RE, '"$1_rinse":');
-    if (after !== before) {
-      node.textContent = after;
-      rewritten++;
-      log(`rewrote inline player response at ${Math.round(performance.now() - t0)}ms (pageScriptReady=${!!document.documentElement.dataset.rinse})`);
+const script = document.createElement("script");
+script.src = browser.runtime.getURL("page.js");
+script.onload = () => script.remove();
+script.onerror = () => { state.page = "blocked"; render(); };
+(document.head || root).append(script);
+setTimeout(() => {
+  if (state.page === "loading") { state.page = "did not run"; render(); }
+}, 4000);
+
+new MutationObserver(() => {
+  try {
+    const page = JSON.parse(root.dataset.rinsePage || "null");
+    if (page) { state.page = "ok"; state.pruned = page.pruned; render(); }
+  } catch {}
+}).observe(root, { attributes: true, attributeFilter: ["data-rinse-page"] });
+
+// --- Ad skipping ---------------------------------------------------------------------------
+const SKIP_SELECTORS = [
+  ".ytp-ad-skip-button", ".ytp-ad-skip-button-modern", ".ytp-skip-ad-button",
+  ".ytp-ad-skip-button-slot button", "[id^='skip-button'] button", "button[aria-label^='Skip']",
+  ".ytm-skip-ad-button", "button.ad-skip-button",
+].join(",");
+const AD_PLAYER = ".html5-video-player.ad-showing, .html5-video-player.ad-interrupting";
+let adActive = false;
+let saved = null;
+
+function handleAds() {
+  const player = document.querySelector(AD_PLAYER);
+  const v = (player || document).querySelector("video");
+  if (player && v) {
+    if (!adActive) {
+      adActive = true;
+      saved = { muted: v.muted, rate: v.playbackRate };
+      state.skipped++;
+      log("ad started, skipping");
+      render();
     }
+    v.muted = true;
+    if (v.playbackRate !== 16) v.playbackRate = 16;
+    document.querySelector(SKIP_SELECTORS)?.click();
+  } else if (adActive) {
+    adActive = false;
+    if (v && saved) {
+      v.muted = saved.muted;
+      v.playbackRate = saved.rate === 16 ? 1 : saved.rate;
+    }
+    log("ad finished");
   }
-}).observe(document, { childList: true, subtree: true });
+}
+setInterval(handleAds, 250);
+new MutationObserver(handleAds).observe(root, { attributes: true, attributeFilter: ["class"], subtree: true });
+
+// --- Background playback -----------------------------------------------------------------
+// iOS pauses <video> when Safari goes to the background. Undo pauses that happen within
+// 2s of going hidden; later ones (lock screen, Control Center) are the user's and stay.
+document.addEventListener("pause", (e) => {
+  const v = e.target;
+  if (!(v instanceof HTMLVideoElement) || v.ended) return;
+  lastPause = { v, t: performance.now() };
+  if (document.hidden && hiddenAt) resumeIfPausedBy("paused by going to background", lastPause, 2000, hiddenAt);
+}, true);
+
+function resumeIfPausedBy(reason, pause, windowMs, since = pause?.t) {
+  if (!pause || !pause.v.paused || pause.v.ended || performance.now() - since > windowMs) return;
+  log(reason + ", resuming");
+  resume(pause.v, [0, 250, 1000, 2500]);
+}
+
+function resume(v, delays) {
+  const [delay, ...rest] = delays;
+  setTimeout(() => {
+    if (!v.paused) return;
+    v.play().then(() => {
+      state.resumed++;
+      render();
+    }).catch((err) => {
+      if (rest.length) return resume(v, rest);
+      state.failed++;
+      log("background resume failed", err);
+      render();
+    });
+  }, delay);
+}
+
+// Lets iOS keep the video alive in PiP when going home from fullscreen. Batched: YouTube mutates the DOM constantly.
+let scanQueued = false;
+new MutationObserver(() => {
+  if (scanQueued) return;
+  scanQueued = true;
+  setTimeout(() => {
+    scanQueued = false;
+    for (const v of document.querySelectorAll("video:not([autopictureinpicture])")) {
+      v.setAttribute("autopictureinpicture", "");
+      v.removeAttribute("disablepictureinpicture");
+    }
+  }, 500);
+}).observe(root, { childList: true, subtree: true });
+
+// --- Badge + PiP button --------------------------------------------------------------------
+let badge;
+function render() {
+  if (!document.body) return;
+  if (!badge) {
+    badge = document.createElement("div");
+    badge.style.cssText = "position:fixed;z-index:2147483647;left:8px;top:52px;display:flex;gap:6px;font:11px -apple-system,sans-serif;opacity:.9;pointer-events:auto;";
+    const info = document.createElement("span");
+    info.style.cssText = "color:#fff;padding:5px 8px;border-radius:8px;";
+    const pip = document.createElement("button");
+    pip.textContent = "PiP";
+    pip.style.cssText = "background:#111;color:#fff;border:0;padding:5px 10px;border-radius:8px;";
+    pip.onclick = togglePip;
+    badge.append(info, pip);
+    document.body.append(badge);
+  }
+  const ok = state.page === "ok";
+  const parts = [`rinse · page ${state.page}`, `pruned ${state.pruned}`, `ads skipped ${state.skipped}`];
+  if (state.resumed || state.failed) parts.push(`bg ${state.resumed}✓ ${state.failed}✗`);
+  badge.firstChild.textContent = parts.join(" · ");
+  badge.firstChild.style.background = ok ? "#16a34a" : state.page === "loading" ? "#555" : "#d97706";
+}
+
+function togglePip() {
+  const v = document.querySelector("video");
+  if (!v) return log("no <video> on page");
+  v.removeAttribute("disablepictureinpicture");
+  try {
+    if (v.webkitSetPresentationMode) {
+      v.webkitSetPresentationMode(v.webkitPresentationMode === "picture-in-picture" ? "inline" : "picture-in-picture");
+    } else if (document.pictureInPictureElement) document.exitPictureInPicture();
+    else v.requestPictureInPicture();
+  } catch (e) {
+    log("PiP failed", e);
+  }
+}
+
+if (document.body) render();
+else document.addEventListener("DOMContentLoaded", render);
