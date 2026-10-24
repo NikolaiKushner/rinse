@@ -8,7 +8,11 @@
   if (document.documentElement.dataset.rinse) return;
   document.documentElement.dataset.rinse = "1";
   const log = (...a) => console.log("[rinse]", ...a);
+  // All state lives up here: badge() reads it, and prune() can call badge() before the rest of this file has run.
   const stats = { pruned: 0, sources: {} };
+  const bg = { hiddenAt: 0, resumed: 0, failed: 0 };
+  const ads = { skipped: 0, active: false, saved: null };
+  let el; // badge element
 
   const AD_KEYS = ["adPlacements", "adSlots", "playerAds", "adBreakHeartbeatParams"];
   function prune(obj, source) {
@@ -77,7 +81,6 @@
   const RESUME_WINDOW_MS = 2000;
   const realHidden = Object.getOwnPropertyDescriptor(Document.prototype, "hidden").get;
   const isReallyHidden = () => realHidden.call(document);
-  const bg = { hiddenAt: 0, resumed: 0, failed: 0 };
 
   // On window in the capture phase and registered before the blockers below, so it runs first.
   window.addEventListener("visibilitychange", () => {
@@ -120,6 +123,58 @@
     }, delay);
   }
 
+  // WebKit may pause the video a moment *before* the page reports hidden. Remember the last
+  // pause, and undo it if the page goes hidden right after.
+  let lastPause = null;
+  document.addEventListener("pause", (e) => {
+    if (e.target instanceof HTMLVideoElement) lastPause = { v: e.target, t: performance.now() };
+  }, true);
+  window.addEventListener("visibilitychange", () => {
+    if (!isReallyHidden() || !lastPause || performance.now() - lastPause.t > 1500) return;
+    if (lastPause.v.paused && !lastPause.v.ended) {
+      log("paused just before going to background, resuming");
+      resume(lastPause.v, [0, 250, 1000, 2500]);
+    }
+  }, true);
+
+  // Ads that never show up in JSON (m.youtube.com stitches them into the stream): when the
+  // player enters ad mode, mute, fast-forward, jump to the end and press Skip.
+  const SKIP_SELECTORS = [
+    ".ytp-ad-skip-button", ".ytp-ad-skip-button-modern", ".ytp-skip-ad-button",
+    ".ytp-ad-skip-button-slot button", "[id^='skip-button'] button", "button[aria-label^='Skip']",
+  ].join(",");
+  function adPlayer() {
+    return document.querySelector(".html5-video-player.ad-showing, .html5-video-player.ad-interrupting");
+  }
+  function handleAds() {
+    const player = adPlayer();
+    const v = (player || document).querySelector("video");
+    if (player && v) {
+      if (!ads.active) {
+        ads.active = true;
+        ads.saved = { muted: v.muted, rate: v.playbackRate };
+        ads.skipped++;
+        log("ad started, skipping");
+        badge();
+      }
+      v.muted = true;
+      if (v.playbackRate < 16) v.playbackRate = 16;
+      if (Number.isFinite(v.duration) && v.duration > 0 && v.duration < 180 && v.currentTime < v.duration - 0.3) {
+        v.currentTime = v.duration - 0.1;
+      }
+      document.querySelector(SKIP_SELECTORS)?.click();
+    } else if (ads.active) {
+      ads.active = false;
+      if (v && ads.saved) {
+        v.muted = ads.saved.muted;
+        v.playbackRate = ads.saved.rate >= 16 ? 1 : ads.saved.rate;
+      }
+      log("ad finished");
+    }
+  }
+  setInterval(handleAds, 250);
+  new MutationObserver(handleAds).observe(document.documentElement, { attributes: true, attributeFilter: ["class"], subtree: true });
+
   // Lets iOS keep the video alive in PiP when going home from fullscreen.
   // YouTube mutates the DOM constantly, so the scan is batched.
   let scanQueued = false;
@@ -136,12 +191,11 @@
   }).observe(document.documentElement, { childList: true, subtree: true });
 
   // Badge + PiP button.
-  let el;
   function badge() {
     if (!document.body) return;
     if (!el) {
       el = document.createElement("div");
-      el.style.cssText = "position:fixed;z-index:2147483647;right:8px;bottom:8px;display:flex;gap:6px;font:12px -apple-system,sans-serif;";
+      el.style.cssText = "position:fixed;z-index:2147483647;right:8px;top:56px;display:flex;gap:6px;font:11px -apple-system,sans-serif;opacity:.85;";
       const info = document.createElement("span");
       info.style.cssText = "background:#16a34a;color:#fff;padding:6px 8px;border-radius:8px;";
       const pip = document.createElement("button");
@@ -151,8 +205,9 @@
       el.append(info, pip);
       document.body.append(el);
     }
-    const bgInfo = bg.resumed || bg.failed ? ` · bg ${bg.resumed}✓ ${bg.failed}✗` : "";
-    el.firstChild.textContent = `rinse: ${stats.pruned} ad keys pruned${bgInfo}`;
+    const parts = [`rinse ✓`, `pruned ${stats.pruned}`, `ads skipped ${ads.skipped}`];
+    if (bg.resumed || bg.failed) parts.push(`bg ${bg.resumed}✓ ${bg.failed}✗`);
+    el.firstChild.textContent = parts.join(" · ");
   }
   async function togglePip() {
     const v = document.querySelector("video");
@@ -169,6 +224,7 @@
       log("PiP failed", e);
     }
   }
-  document.addEventListener("DOMContentLoaded", badge);
+  if (document.body) badge();
+  else document.addEventListener("DOMContentLoaded", badge);
   log("page script installed", location.href);
 })();
