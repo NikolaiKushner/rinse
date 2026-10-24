@@ -13,6 +13,9 @@ settings:
     MARKETING_VERSION: 0.1.0
     CURRENT_PROJECT_VERSION: 1
     SWIFT_VERSION: "5.0"
+    # Xcode's debug dylib (for previews) leaves content-blocker extensions hanging at launch:
+    # Safari's reload times out with SFErrorDomain 3 and never reaches beginRequest.
+    ENABLE_DEBUG_DYLIB: NO
     TARGETED_DEVICE_FAMILY: "1,2"
     "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": Config/macOS.entitlements
     "ENABLE_HARDENED_RUNTIME[sdk=macosx*]": YES
@@ -97,3 +100,8 @@ targetTemplates:
       base:
         PRODUCT_NAME: Rinse${name}
         PRODUCT_BUNDLE_IDENTIFIER: com.nikolaikushner.rinse.${id}
+        # Safari's content-blocker extension point needs a PlugInKit subsystem from the platform UI
+        # framework; an unused Swift import gets dead-stripped, so link it explicitly.
+        "OTHER_LDFLAGS[sdk=macosx*]": "$(inherited) -framework AppKit"
+        "OTHER_LDFLAGS[sdk=iphoneos*]": "$(inherited) -framework UIKit"
+        "OTHER_LDFLAGS[sdk=iphonesimulator*]": "$(inherited) -framework UIKit"

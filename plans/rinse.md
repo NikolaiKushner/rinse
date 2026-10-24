@@ -129,7 +129,7 @@ filters/sources.json                URL, лицензии и закреплён�
 
 ### 5. Четыре блокера на реальных списках — M · `[~]`
 
-> **Сделано три из четырёх (2026-10-24):** Ads (EasyList + RU AdList + `filters/rinse.txt`, сеть), Privacy (EasyPrivacy), Page Cleaner (косметика всех списков). Annoyances не делали. d3ward-тест и регрессия на 10 сайтах ещё не проводились. Известное ограничение: CSS-инъекции и скриптлеты (казино-брендинг фоном `body` на HDrezka, VAST в плеере) Content Blocker'ом не убрать — это задача для веб-расширения на `<all_urls>` (в «Отложено»).
+> **Сделано три из четырёх (2026-10-24):** Ads (EasyList + RU AdList + `filters/rinse.txt`, сеть), Privacy (EasyPrivacy), Page Cleaner (косметика всех списков). Annoyances не делали. d3ward-тест и регрессия на 10 сайтах ещё не проводились. **Блокеры не работали до 2026-10-24 19:30:** расширению не хватало AppKit/UIKit (подсистема PlugInKit точки `com.apple.Safari.content-blocker`), Safari не получал правила и через ~90 с падал с `SFErrorDomain 3`. Исправлено линковкой фреймворка в `project.yml`. После этого на hdrezka.sh пропал брендинг Leader-Bet (`quickcore.fun`, свои правила в `filters/rinse.txt`). Известное ограничение: CSS-инъекции и скриптлеты (казино-брендинг фоном `body` на HDrezka, VAST в плеере) Content Blocker'ом не убрать — это задача для веб-расширения на `<all_urls>` (в «Отложено»).
 
 
 - **Файлы:** `Extensions/Blockers/{Ads,Privacy,Cosmetic,Annoyances}/…`, `project.yml` (ещё 3 таргета), `Sources/FilterCompiler/CosmeticRule.swift` (`##sel`, `domain##sel`, `#@#` → `css-display-none`), `Tests/FilterCompilerTests/CosmeticRuleTests.swift`.

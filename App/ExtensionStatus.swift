@@ -1,4 +1,7 @@
 import SafariServices
+import os
+
+private let logger = Logger(subsystem: "com.nikolaikushner.rinse", category: "blockers")
 
 /// Whether Safari has an extension turned on. `nil` means the OS gives no way to ask
 /// (Safari Web Extensions on iOS/iPadOS).
@@ -28,6 +31,11 @@ enum ExtensionStatus {
         guard ext.isContentBlocker else { return nil }
         return await withCheckedContinuation { cont in
             SFContentBlockerManager.reloadContentBlocker(withIdentifier: ext.rawValue) { error in
+                if let error {
+                    logger.error("reload \(ext.rawValue, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+                } else {
+                    logger.info("reload \(ext.rawValue, privacy: .public) ok")
+                }
                 cont.resume(returning: error.map { ($0 as NSError).localizedDescription })
             }
         }

@@ -3,15 +3,20 @@ import SwiftUI
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var states: [RinseExtension: Bool?] = [:]
-    @State private var reloadErrors: [RinseExtension: String] = [:]
+    @State private var reloads: [RinseExtension: ReloadResult] = [:]
+    @State private var reloading = false
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
                     ForEach(RinseExtension.allCases) { ext in
-                        ExtensionRow(ext: ext, enabled: states[ext] ?? nil, error: reloadErrors[ext])
+                        ExtensionRow(ext: ext, enabled: states[ext] ?? nil, reload: reloads[ext])
                     }
+                    Button(reloading ? "Reloading rules…" : "Reload rules") {
+                        Task { await reloadRules() }
+                    }
+                    .disabled(reloading)
                 } header: {
                     Text("Extensions")
                 } footer: {
@@ -33,12 +38,22 @@ struct ContentView: View {
             .refreshable { await refresh() }
         }
         .task {
-            for ext in RinseExtension.allCases { reloadErrors[ext] = await ExtensionStatus.reload(ext) }
-            await refresh()
+            await reloadRules()
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await refresh() } }
         }
+    }
+
+    /// Makes Safari recompile every blocker's rules. Runs on launch, so a new build's lists take effect.
+    private func reloadRules() async {
+        reloading = true
+        for ext in RinseExtension.allCases where ext.isContentBlocker {
+            let error = await ExtensionStatus.reload(ext)
+            reloads[ext] = error.map(ReloadResult.failed) ?? .loaded(Date())
+        }
+        reloading = false
+        await refresh()
     }
 
     private func refresh() async {
@@ -66,7 +81,7 @@ struct ContentView: View {
 private struct ExtensionRow: View {
     let ext: RinseExtension
     let enabled: Bool?
-    let error: String?
+    let reload: ReloadResult?
 
     var body: some View {
         HStack(spacing: 12) {
@@ -77,9 +92,14 @@ private struct ExtensionRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(ext.title).font(.headline)
                 Text(ext.subtitle).font(.caption).foregroundStyle(.secondary)
-                // Safari only loads rules for a blocker that is turned on, so an error is expected while it's off.
-                if let error, enabled == true {
-                    Text("Rules failed to load: \(error)").font(.caption).foregroundStyle(.red)
+                switch reload {
+                case .loaded(let date):
+                    Text("Rules loaded \(date.formatted(date: .omitted, time: .standard))").font(.caption).foregroundStyle(.green)
+                case .failed(let error):
+                    // Safari only loads rules for a blocker that is turned on, so an error is expected while it's off.
+                    Text("Rules not loaded: \(error)").font(.caption).foregroundStyle(enabled == false ? .secondary : Color.red)
+                case nil:
+                    EmptyView()
                 }
             }
             Spacer()
@@ -95,6 +115,11 @@ private struct ExtensionRow: View {
         .labelStyle(.titleAndIcon)
         .padding(.vertical, 4)
     }
+}
+
+enum ReloadResult {
+    case loaded(Date)
+    case failed(String)
 }
 
 #Preview {

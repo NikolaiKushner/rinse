@@ -3,7 +3,8 @@
 //   - injects page.js (JSON ad pruning, visibility spoofing) and reports whether it ran
 //   - skips ads stitched into the stream: mute, 16x, press Skip
 //   - resumes playback when iOS pauses the video on going to the background
-//   - status badge and PiP button
+//   - status badge and PiP button, only in debug mode:
+//     run localStorage.setItem("rinse-debug", "1") in the page console, then reload
 const log = (...a) => console.log("[rinse:content]", ...a);
 const root = document.documentElement;
 const state = { page: "loading", pruned: 0, skipped: 0, resumed: 0, failed: 0 };
@@ -166,8 +167,9 @@ new MutationObserver(() => {
 
 // --- Badge + PiP button --------------------------------------------------------------------
 let badge;
+const debug = (() => { try { return localStorage.getItem("rinse-debug") === "1"; } catch { return false; } })();
 function render() {
-  if (!document.body) return;
+  if (!debug || !document.body) return;
   if (!badge) {
     badge = document.createElement("div");
     badge.style.cssText = "position:fixed;z-index:2147483647;left:8px;top:52px;display:flex;gap:6px;font:11px -apple-system,sans-serif;opacity:.9;pointer-events:auto;";
