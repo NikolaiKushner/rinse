@@ -1,48 +1,153 @@
-# Rinse
+<p align="center">
+  <img src="App/Assets.xcassets/AppIcon.appiconset/mac-128@2x.png" width="128" height="128" alt="Rinse icon">
+</p>
 
-Safari extensions for iPhone, iPad and Mac:
+<h1 align="center">Rinse</h1>
 
-- **Rinse for YouTube** — removes ads from the YouTube player, adds Picture in Picture and background playback.
-- **Rinse Ads**, **Rinse Privacy**, **Rinse Page Cleaner** — content blockers for ad networks, trackers and leftover ad slots on every site (EasyList, EasyPrivacy, RU AdList).
+<p align="center">
+  <b>Ad-free YouTube and a cleaner web, right inside Safari.</b><br>
+  iPhone · iPad · Mac — no VPN, no proxy, no account.
+</p>
 
-Plan: [plans/rinse.md](plans/rinse.md) · YouTube spike: [docs/spikes/youtube-streams.md](docs/spikes/youtube-streams.md)
+<p align="center">
+  <img alt="Platforms" src="https://img.shields.io/badge/platforms-iOS%2018%20%7C%20iPadOS%2018%20%7C%20macOS%2015-0a84ff">
+  <img alt="Safari" src="https://img.shields.io/badge/Safari-Web%20Extension%20%2B%20Content%20Blockers-1ec8e6">
+  <img alt="Rules" src="https://img.shields.io/badge/rules-143k-34c759">
+  <img alt="Swift" src="https://img.shields.io/badge/Swift-SwiftUI-f05138">
+  <img alt="Status" src="https://img.shields.io/badge/status-alpha-orange">
+</p>
 
-## Run
+---
 
-Needs Xcode 27+ and `brew install xcodegen`. The project is generated from `project.yml`; `Rinse.xcodeproj` is not committed.
+Rinse is a Safari extension app in the spirit of [Vinegar](https://andadinosaur.com/vinegar), with a site-wide ad blocker built in.
+
+- **YouTube without ads.** Ads are cut out of the player data before they load. Anything that still slips through is muted, played at 16× and skipped automatically.
+- **Background playback on iPhone.** Lock the screen or switch apps and the video keeps playing. Pausing from the Lock Screen still works.
+- **Ads and trackers blocked on every site.** Three Safari content blockers carry about 143,000 rules from EasyList, EasyPrivacy and RU AdList, plus Rinse's own rules.
+- **Private by design.** The content blockers never see the pages you visit: Safari applies the rules itself. The YouTube extension only asks for access to `youtube.com`. Nothing is collected or sent anywhere.
+
+## What's inside
+
+| Extension | What it does | Access |
+|---|---|---|
+| **Rinse for YouTube** | Strips ad payloads from the player, skips stitched ads, keeps playback alive in the background | `youtube.com` only |
+| **Rinse Ads** | Blocks ad networks (EasyList + RU AdList network rules, 75.7k) | none |
+| **Rinse Privacy** | Blocks trackers and analytics (EasyPrivacy, 56.3k) | none |
+| **Rinse Page Cleaner** | Hides leftover ad slots, banners and brandings (element hiding, 11k) | none |
+
+The container app shows which extensions are on, reloads the rules, and walks you through enabling them.
+
+## How it works
+
+```mermaid
+flowchart LR
+  subgraph YouTube["Rinse for YouTube (Web Extension)"]
+    BG["background.js<br/>scripting.executeScript<br/>world: MAIN"] --> PAGE["page.js<br/>YouTube's JS world"]
+    CS["content.js<br/>isolated world"]
+  end
+  PAGE -- "prunes adPlacements / adSlots / playerAds<br/>from ytInitialPlayerResponse, fetch, XHR" --> P[YouTube player]
+  PAGE -- "hides visibility & focus changes" --> P
+  CS -- "ad-showing? mute · 16× · press Skip" --> P
+  CS -- "iOS paused on background? play()" --> P
+
+  subgraph Blockers["Content Blockers"]
+    L["EasyList · EasyPrivacy · RU AdList · filters/rinse.txt"] --> C["tools/filters/compile.py"] --> J["blockerList.json ×3"]
+  end
+  J --> S[Safari applies rules natively]
+```
+
+**YouTube.** A custom `<video>` player like the original Vinegar is no longer possible: as of 2026 YouTube serves no HLS, and direct stream URLs return 403 after about 12–16 MB without a PO token ([spike report](docs/spikes/youtube-streams.md)). So Rinse keeps YouTube's own player and takes the ads out of it:
+
+1. `page.js` runs in YouTube's own JS world and deletes the ad fields from player responses before the player reads them. It's injected through `scripting.executeScript`, because YouTube's CSP blocks a plain `<script src>`.
+2. Some ads are stitched into the stream itself and never appear in JSON. For those, `content.js` watches for the player's `ad-showing` state, then mutes the ad, plays it at 16× and presses Skip, finding the button by its label.
+3. For background playback, `content.js` swallows `visibilitychange`, `pagehide`, `blur` and `freeze` before YouTube sees them. If iOS still pauses the video while going to the background, it resumes it.
+
+**Everything else.** `tools/filters/compile.py` converts Adblock Plus syntax into Safari's content-blocker JSON:
+
+- network rules with options and `@@` exceptions;
+- element hiding with per-domain `#@#` exceptions;
+- `site.*` TLD wildcards, turned into page URL filters.
+
+What Safari can't express (regex rules, `$redirect`, scriptlets, procedural selectors) is dropped and counted. The output is verified with WebKit's own compiler, and each CSS selector is checked by WebKit, because a single invalid one would silently disable the 250 selectors batched with it.
+
+## Build and run
+
+Requirements: Xcode 27+, [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`), and an Apple Developer team. The team ID is set in `project.yml`.
 
 ```sh
 scripts/run.sh mac     # build and open the Mac app
-scripts/run.sh ios     # build and install on the connected, unlocked iPhone/iPad
+scripts/run.sh ios     # build and install on a connected, unlocked iPhone or iPad
 ```
 
-Or `xcodegen generate && open Rinse.xcodeproj` and run `Rinse_iOS` / `Rinse_macOS`.
+Or run `xcodegen generate && open Rinse.xcodeproj` and use the `Rinse_iOS` / `Rinse_macOS` schemes. `Rinse.xcodeproj` is generated and not committed.
 
-### Update filter lists
+### Turn the extensions on
+
+- **Mac:** Safari → Settings → Extensions → turn on all four Rinse extensions. Allow *Rinse for YouTube* on youtube.com.
+- **iPhone / iPad:** Settings → Apps → Safari → Extensions → turn on all four. Allow *Rinse for YouTube* on youtube.com.
+
+Open the Rinse app once after installing or updating, so Safari reloads the rules.
+
+### Update the filter lists
 
 ```sh
-scripts/update-filters.sh                                            # download + compile
-python3 -m unittest discover -s tools/filters                        # compiler tests
+scripts/update-filters.sh                                                   # download + compile
+python3 -m unittest discover -s tools/filters                               # compiler tests
 swift tools/filters/validate.swift Extensions/Blockers/*/blockerList.json   # WebKit accepts the rules
 ```
 
 If WebKit starts rejecting selectors, regenerate the reject list:
-`python3 tools/filters/compile.py --dump-selectors /tmp/s.txt && swift tools/filters/check-selectors.swift /tmp/s.txt > filters/invalid-selectors.txt`
 
-### Turn the extensions on
+```sh
+python3 tools/filters/compile.py --dump-selectors /tmp/s.txt
+swift tools/filters/check-selectors.swift /tmp/s.txt > filters/invalid-selectors.txt
+```
 
-- **Mac:** Safari → Settings → Extensions → turn on all Rinse extensions. For *Rinse for YouTube*, allow it on youtube.com. Debug builds need Safari → Develop → *Allow Unsigned Extensions* only if the build is not signed with a team.
-- **iPhone / iPad:** Settings → Apps → Safari → Extensions → turn on all of them, and allow *Rinse for YouTube* on youtube.com.
+To see Rinse's state on a YouTube page, run `localStorage.setItem("rinse-debug", "1")` in the page console and reload. A status badge then shows whether `page.js` ran and how many ad fields were pruned, ads skipped and background resumes.
 
-## Layout
+## Project layout
 
 | Path | What |
 |---|---|
-| `App/` | SwiftUI container app (status of extensions, how to enable) |
+| `App/` | SwiftUI container app: extension status, rule reload, how to enable |
 | `Shared/` | Code shared by the app targets |
-| `Extensions/YouTube/` | Safari Web Extension: `Resources/content.js` injects `page.js`, which prunes ad payloads |
-| `Extensions/Blockers/{Ads,Privacy,Cosmetic}/` | Content blockers; `blockerList.json` is generated, don't edit it |
-| `filters/` | `sources.json` (which lists go into which blocker), `rinse.txt` (our own rules) |
+| `Extensions/YouTube/` | Safari Web Extension: `content.js`, `page.js`, `background.js` |
+| `Extensions/Blockers/{Ads,Privacy,Cosmetic}/` | Content blockers; `blockerList.json` is generated, don't edit it by hand |
+| `filters/` | `sources.json` (which lists go into which blocker), `rinse.txt` (our own rules), `invalid-selectors.txt` |
 | `tools/filters/` | Filter compiler, its tests, and WebKit-based validators |
-| `scripts/` | `run.sh`, icon and blocklist generators |
-| `spikes/` | Throwaway experiments, kept for reference |
+| `scripts/` | `run.sh`, `update-filters.sh`, icon generator |
+| `plans/`, `docs/spikes/` | Implementation plan and research notes |
+| `spikes/` | Throwaway experiments and their tests, kept for reference |
+
+## Status and limitations
+
+Rinse is alpha: tested on an iPhone 14 Plus and a Mac, not yet on iPad.
+
+- **Content blockers can only hide or block.** They can't rewrite styles, so a site that reserves space for an ad (such as the empty strip above HDrezka's header) keeps the gap.
+- **No scriptlets.** Filters that need JavaScript on arbitrary sites are skipped, because running scripts everywhere would require "access to all websites".
+- **Fragile by nature.** YouTube changes often. When it breaks, `page.js` and `content.js` fall back to YouTube's normal player rather than a black screen.
+- **Updates ship with the app.** Filter lists update with app releases; there are no on-device updates yet.
+
+See [plans/rinse.md](plans/rinse.md) for the roadmap: an element picker ("hide this"), a per-site allowlist, Shorts, embedded players and an App Store release.
+
+## Credits and license
+
+Filter lists: [EasyList and EasyPrivacy](https://easylist.to) (CC BY-SA 3.0) and [RU AdList](https://forums.lanik.us/viewforum.php?f=102) (CC BY 3.0). See [LICENSES.md](LICENSES.md). Inspired by Vinegar by And a Dinosaur.
+
+Rinse is not affiliated with YouTube or Google.
+
+---
+
+<details>
+<summary><b>По-русски</b></summary>
+
+**Rinse** — набор расширений Safari для iPhone, iPad и Mac.
+
+- **YouTube без рекламы.** Рекламные данные вырезаются из ответов плеера. Если реклама всё-таки появляется, она идёт без звука на скорости ×16 и пропускается автоматически.
+- **Фоновое воспроизведение на iPhone.** Видео продолжает играть при заблокированном экране и при переключении на другое приложение.
+- **Блокировка рекламы и трекеров на всех сайтах.** Около 143 тыс. правил из EasyList, EasyPrivacy и RU AdList, плюс собственные правила Rinse (например, против казино-брендинга на HDrezka).
+- **Без сбора данных.** Блокеры не видят страниц, которые вы открываете: правила применяет сам Safari. YouTube-расширению нужен доступ только к `youtube.com`.
+
+Сборка: `scripts/run.sh mac` или `scripts/run.sh ios`. Затем включите все четыре расширения в настройках Safari и один раз откройте приложение Rinse.
+
+</details>
