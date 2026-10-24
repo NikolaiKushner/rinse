@@ -3,9 +3,9 @@
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
-const video = { muted: false, playbackRate: 1, paused: false, ended: false, setAttribute() {}, removeAttribute() {} };
+const video = { currentTime: 3, duration: 15, muted: false, playbackRate: 1, paused: false, ended: false, setAttribute() {}, removeAttribute() {} };
 let skipClicks = 0;
-const skipButton = { click: () => skipClicks++, getAttribute: () => null, textContent: " Skip ", offsetParent: {} };
+const skipButton = { click: () => skipClicks++, dispatchEvent() {}, tagName: "BUTTON", className: "ytp-skip", getAttribute: () => null, textContent: " Skip ", offsetParent: {} };
 const otherButton = { click() {}, getAttribute: () => "Mute", textContent: "", offsetParent: {} };
 let adShowing = true;
 const player = {
@@ -29,6 +29,7 @@ const document = {
   },
   querySelectorAll: () => [],
 };
+globalThis.MouseEvent = class { constructor(type) { this.type = type; } };
 const ctx = {
   document, console, performance, JSON,
   window: { addEventListener() {} },
@@ -36,6 +37,7 @@ const ctx = {
   setTimeout: () => 0, setInterval: (fn) => intervals.push(fn),
   MutationObserver: class { observe() {} },
   HTMLVideoElement: class {},
+  MouseEvent: class { constructor(type) { this.type = type; } },
 };
 vm.createContext(ctx);
 vm.runInContext(readFileSync(new URL("../../../Extensions/YouTube/Resources/content.js", import.meta.url), "utf8"), ctx);

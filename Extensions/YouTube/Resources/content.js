@@ -7,6 +7,8 @@
 const log = (...a) => console.log("[rinse:content]", ...a);
 const root = document.documentElement;
 const state = { page: "loading", pruned: 0, skipped: 0, resumed: 0, failed: 0 };
+// Shown in the badge while an ad plays, to see from a screenshot which step doesn't take.
+const adDebug = { skip: "none", clicks: 0, rate: 1, left: "" };
 
 // --- page.js injection -------------------------------------------------------------------
 // In the isolated world, document.hidden is the real value: page.js's overrides don't reach here.
@@ -48,6 +50,24 @@ new MutationObserver(() => {
 }).observe(root, { attributes: true, attributeFilter: ["data-rinse-page"] });
 
 // --- Ad skipping ---------------------------------------------------------------------------
+// A bare click() isn't always enough: YouTube's buttons may listen to pointer or touch events.
+function press(el) {
+  const r = el.getBoundingClientRect?.() ?? { left: 0, top: 0, width: 0, height: 0 };
+  const at = { bubbles: true, cancelable: true, composed: true, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 };
+  for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup"]) {
+    const Ctor = type.startsWith("pointer") && typeof PointerEvent === "function" ? PointerEvent : MouseEvent;
+    el.dispatchEvent(new Ctor(type, at));
+  }
+  if (typeof TouchEvent === "function") {
+    try {
+      const touch = new Touch({ identifier: Date.now(), target: el, clientX: at.clientX, clientY: at.clientY });
+      el.dispatchEvent(new TouchEvent("touchstart", { ...at, touches: [touch], targetTouches: [touch], changedTouches: [touch] }));
+      el.dispatchEvent(new TouchEvent("touchend", { ...at, touches: [], targetTouches: [], changedTouches: [touch] }));
+    } catch {}
+  }
+  el.click();
+}
+
 // Class names differ between www and m.youtube.com and change often, so the Skip button is
 // found by its label: any button-like element in the player whose text or aria-label says Skip.
 const SKIP_LABEL = /^(skip|пропустить|пропуск|überspringen|passer|saltar|salta|pular|pomiń)\b/i;
@@ -68,6 +88,7 @@ function handleAds() {
   if (player && v) {
     if (!adActive) {
       adActive = true;
+      adDebug.clicks = 0;
       saved = { muted: v.muted, rate: v.playbackRate };
       state.skipped++;
       log("ad started, skipping");
@@ -75,11 +96,16 @@ function handleAds() {
     }
     v.muted = true;
     if (v.playbackRate !== 16) v.playbackRate = 16;
-    const skip = findSkipButton(player);
+    // The ad UI isn't always inside the player element on m.youtube.com.
+    const skip = findSkipButton(player) || findSkipButton(document);
+    adDebug.skip = skip ? (skip.tagName.toLowerCase() + (skip.className ? "." + String(skip.className).split(" ")[0] : "")) : "none";
     if (skip) {
-      skip.click();
-      log("pressed Skip");
+      press(skip);
+      adDebug.clicks++;
     }
+    adDebug.rate = v.playbackRate;
+    adDebug.left = Number.isFinite(v.duration) ? `${Math.round(v.currentTime)}/${Math.round(v.duration)}s` : "?";
+    render();
   } else if (adActive) {
     adActive = false;
     if (v && saved) {
@@ -157,6 +183,7 @@ function render() {
   const ok = state.page === "ok";
   const parts = [`rinse · page ${state.page}`, `pruned ${state.pruned}`, `ads skipped ${state.skipped}`];
   if (state.page !== "ok" && state.injectError) parts.push(`inject: ${state.injectError.slice(0, 60)}`);
+  if (adActive) parts.push(`AD skip=${adDebug.skip} clicks=${adDebug.clicks} rate=${adDebug.rate} t=${adDebug.left}`);
   if (state.resumed || state.failed) parts.push(`bg ${state.resumed}✓ ${state.failed}✗`);
   badge.firstChild.textContent = parts.join(" · ");
   badge.firstChild.style.background = ok ? "#16a34a" : state.page === "loading" ? "#555" : "#d97706";
