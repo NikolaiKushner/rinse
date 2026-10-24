@@ -5,9 +5,13 @@ import vm from "node:vm";
 
 const video = { muted: false, playbackRate: 1, paused: false, ended: false, setAttribute() {}, removeAttribute() {} };
 let skipClicks = 0;
-const skipButton = { click: () => skipClicks++ };
+const skipButton = { click: () => skipClicks++, getAttribute: () => null, textContent: " Skip ", offsetParent: {} };
+const otherButton = { click() {}, getAttribute: () => "Mute", textContent: "", offsetParent: {} };
 let adShowing = true;
-const player = { querySelector: (s) => (s === "video" ? video : null) };
+const player = {
+  querySelector: (s) => (s === "video" ? video : null),
+  querySelectorAll: () => (adShowing ? [otherButton, skipButton] : []),
+};
 const node = () => ({ style: {}, append() {}, firstChild: { style: {} } });
 const intervals = [];
 const document = {
@@ -28,7 +32,7 @@ const document = {
 const ctx = {
   document, console, performance, JSON,
   window: { addEventListener() {} },
-  browser: { runtime: { getURL: (p) => "safari-web-extension://x/" + p } },
+  browser: { runtime: { getURL: (p) => "safari-web-extension://x/" + p, sendMessage: async () => ({ ok: true }) } },
   setTimeout: () => 0, setInterval: (fn) => intervals.push(fn),
   MutationObserver: class { observe() {} },
   HTMLVideoElement: class {},

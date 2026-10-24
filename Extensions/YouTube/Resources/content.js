@@ -13,16 +13,29 @@ const state = { page: "loading", pruned: 0, skipped: 0, resumed: 0, failed: 0 };
 // Registered now, before page.js exists, so page.js's event blockers can't swallow it.
 let hiddenAt = 0;
 let lastPause = null;
-window.addEventListener("visibilitychange", () => {
+window.addEventListener("visibilitychange", (e) => {
   hiddenAt = document.hidden ? performance.now() : 0;
   if (document.hidden) resumeIfPausedBy("pause just before going to background", lastPause, 1500);
+  e.stopImmediatePropagation();
 }, true);
+// DOM events are shared with YouTube's JS world, and these capture listeners on window are
+// registered before any of YouTube's, so YouTube never hears that the page went to the
+// background. (Its reads of document.hidden are faked by page.js, when that gets to run.)
+for (const ev of ["webkitvisibilitychange", "pagehide", "blur", "freeze"]) {
+  window.addEventListener(ev, (e) => { if (e.target === window || e.target === document) e.stopImmediatePropagation(); }, true);
+}
 
 const script = document.createElement("script");
 script.src = browser.runtime.getURL("page.js");
 script.onload = () => script.remove();
 script.onerror = () => { state.page = "blocked"; render(); };
 (document.head || root).append(script);
+// <script src> can be blocked by YouTube's CSP; the scripting API isn't. Whichever runs first
+// wins, page.js guards against running twice.
+browser.runtime.sendMessage({ type: "inject-page" }).then((res) => {
+  if (!res?.ok) log("scripting.executeScript failed:", res?.error);
+  state.injectError = res?.ok ? null : res?.error;
+}, (err) => { state.injectError = String(err); });
 setTimeout(() => {
   if (state.page === "loading") { state.page = "did not run"; render(); }
 }, 4000);
@@ -35,11 +48,16 @@ new MutationObserver(() => {
 }).observe(root, { attributes: true, attributeFilter: ["data-rinse-page"] });
 
 // --- Ad skipping ---------------------------------------------------------------------------
-const SKIP_SELECTORS = [
-  ".ytp-ad-skip-button", ".ytp-ad-skip-button-modern", ".ytp-skip-ad-button",
-  ".ytp-ad-skip-button-slot button", "[id^='skip-button'] button", "button[aria-label^='Skip']",
-  ".ytm-skip-ad-button", "button.ad-skip-button",
-].join(",");
+// Class names differ between www and m.youtube.com and change often, so the Skip button is
+// found by its label: any button-like element in the player whose text or aria-label says Skip.
+const SKIP_LABEL = /^(skip|пропустить|пропуск|überspringen|passer|saltar|salta|pular|pomiń)\b/i;
+function findSkipButton(scope) {
+  for (const el of scope.querySelectorAll("button, [role='button'], [class*='skip' i]")) {
+    const label = (el.getAttribute("aria-label") || el.textContent || "").trim();
+    if (SKIP_LABEL.test(label) && el.offsetParent !== null) return el;
+  }
+  return null;
+}
 const AD_PLAYER = ".html5-video-player.ad-showing, .html5-video-player.ad-interrupting";
 let adActive = false;
 let saved = null;
@@ -57,7 +75,11 @@ function handleAds() {
     }
     v.muted = true;
     if (v.playbackRate !== 16) v.playbackRate = 16;
-    document.querySelector(SKIP_SELECTORS)?.click();
+    const skip = findSkipButton(player);
+    if (skip) {
+      skip.click();
+      log("pressed Skip");
+    }
   } else if (adActive) {
     adActive = false;
     if (v && saved) {
@@ -134,6 +156,7 @@ function render() {
   }
   const ok = state.page === "ok";
   const parts = [`rinse · page ${state.page}`, `pruned ${state.pruned}`, `ads skipped ${state.skipped}`];
+  if (state.page !== "ok" && state.injectError) parts.push(`inject: ${state.injectError.slice(0, 60)}`);
   if (state.resumed || state.failed) parts.push(`bg ${state.resumed}✓ ${state.failed}✗`);
   badge.firstChild.textContent = parts.join(" · ");
   badge.firstChild.style.background = ok ? "#16a34a" : state.page === "loading" ? "#555" : "#d97706";

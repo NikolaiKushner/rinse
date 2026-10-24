@@ -13,12 +13,35 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*"],
-      "js": ["content.js"],
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
-    { "resources": ["page.js"], "matches": ["*://*.youtube.com/*"] }
+    {
+      "resources": [
+        "page.js"
+      ],
+      "matches": [
+        "*://*.youtube.com/*"
+      ]
+    }
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  },
+  "permissions": [
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*"
   ]
 }
