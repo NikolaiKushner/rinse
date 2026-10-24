@@ -1,7 +1,17 @@
-# Third-party filter lists
+# Licenses
+
+## Rinse code
+
+Copyright © 2026 Nikolai Kushner. Licensed under the GNU General Public License v3.0, see [LICENSE](LICENSE).
+
+The name "Rinse" and the Rinse icon (`App/Assets.xcassets/AppIcon.appiconset/`, `Extensions/YouTube/Resources/icon-*.png`, `scripts/make-icons.swift`) are not licensed under the GPL. Forks must use their own name and icon.
+
+## Third-party filter lists
 
 Rinse's content blockers are compiled from these lists (see `filters/sources.json`). Rules are
 converted to Safari's format by `tools/filters/compile.py`; unsupported rules are dropped.
+
+The compiled `Extensions/Blockers/*/blockerList.json` files are derived from these lists and stay under their licenses, with attribution.
 
 | List | Source | License |
 |---|---|---|

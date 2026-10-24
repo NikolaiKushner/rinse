@@ -15,6 +15,7 @@
   <img alt="Rules" src="https://img.shields.io/badge/rules-143k-34c759">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-SwiftUI-f05138">
   <img alt="Status" src="https://img.shields.io/badge/status-alpha-orange">
+  <img alt="License" src="https://img.shields.io/badge/license-GPL--3.0-blue">
 </p>
 
 ---
@@ -130,11 +131,19 @@ Rinse is alpha: tested on an iPhone 14 Plus and a Mac, not yet on iPad.
 
 See [plans/rinse.md](plans/rinse.md) for the roadmap: an element picker ("hide this"), a per-site allowlist, Shorts, embedded players and an App Store release.
 
-## Credits and license
+## Price
 
-Filter lists: [EasyList and EasyPrivacy](https://easylist.to) (CC BY-SA 3.0) and [RU AdList](https://forums.lanik.us/viewforum.php?f=102) (CC BY 3.0). See [LICENSES.md](LICENSES.md). Inspired by Vinegar by And a Dinosaur.
+Rinse will be on the App Store for **$1.99**, a one-time purchase that covers iPhone, iPad and Mac. That pays for the developer account and the time spent keeping up with YouTube. The source stays open: you're welcome to build it yourself for free.
 
-Rinse is not affiliated with YouTube or Google.
+## License
+
+Copyright © 2026 Nikolai Kushner.
+
+- **Code:** [GNU GPL v3.0](LICENSE). You may use, study, change and share it. Anything you distribute that's based on it must also be released under the GPL with its source.
+- **Name and icon:** "Rinse" and the Rinse icon are not covered by the GPL. A fork must use its own name and icon.
+- **Filter lists:** [EasyList and EasyPrivacy](https://easylist.to) (CC BY-SA 3.0) and [RU AdList](https://forums.lanik.us/viewforum.php?f=102) (CC BY 3.0). The compiled `blockerList.json` files stay under those licenses. See [LICENSES.md](LICENSES.md).
+
+Inspired by Vinegar by And a Dinosaur. Rinse is not affiliated with YouTube or Google.
 
 ---
 
@@ -149,5 +158,7 @@ Rinse is not affiliated with YouTube or Google.
 - **Без сбора данных.** Блокеры не видят страниц, которые вы открываете: правила применяет сам Safari. YouTube-расширению нужен доступ только к `youtube.com`.
 
 Сборка: `scripts/run.sh mac` или `scripts/run.sh ios`. Затем включите все четыре расширения в настройках Safari и один раз откройте приложение Rinse.
+
+**Цена и лицензия.** В App Store Rinse будет стоить $1,99, одна покупка на iPhone, iPad и Mac. Код открыт под GPL-3.0: его можно собрать самому бесплатно, а форки обязаны оставаться открытыми. Название «Rinse» и иконка под GPL не входят.
 
 </details>
