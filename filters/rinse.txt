@@ -20,3 +20,13 @@ youtube.com##ad-slot-renderer
 youtube.com##ytm-companion-ad-renderer
 youtube.com##ytm-companion-slot
 youtube.com##tp-yt-paper-dialog:has(ytd-enforcement-message-view-model)
+!
+! quickcore.fun: full-page casino branding network (seen on HDrezka mirrors, 2026-10-24).
+! Markup: body.has-brand > div#brnd…[position:fixed] > iframe#ibrnd… src=//s.quickcore.fun/iframeHS/…,
+! side columns div.brand-column-content.col-left-350x800. Not covered by EasyList / RU AdList.
+||quickcore.fun^
+##iframe[src*="quickcore.fun"]
+##div[id^="brnd"]:has(> iframe[id^="ibrnd"])
+##.brand-column-content
+##[class*="col-left-350x800"]
+##[class*="col-right-350x800"]
