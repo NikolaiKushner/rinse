@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Rinse Spike",
+  "description": "Spike: prune YouTube ad payloads, force PiP and background playback.",
+  "version": "0.0.1",
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "page.js"
+      ],
+      "matches": [
+        "*://*.youtube.com/*"
+      ]
+    }
+  ]
+}
