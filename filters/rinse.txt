@@ -1,0 +1,22 @@
+! Rinse's own filters, in Adblock Plus syntax. Compiled together with the downloaded lists.
+!
+! YouTube ad and ad-telemetry endpoints (same-origin, so EasyList's third-party rules miss them)
+||youtube.com/pagead/
+||youtube.com/api/stats/ads
+||youtube.com/get_midroll_
+||youtube.com/ptracking
+!
+! YouTube ad slots in the feed and around the player
+youtube.com##ytd-ad-slot-renderer
+youtube.com##ytd-in-feed-ad-layout-renderer
+youtube.com##ytd-banner-promo-renderer
+youtube.com##ytd-statement-banner-renderer
+youtube.com###masthead-ad
+youtube.com##ytd-promoted-sparkles-web-renderer
+youtube.com##ytd-player-legacy-desktop-watch-ads-renderer
+youtube.com##.ytd-merch-shelf-renderer
+youtube.com##ytm-promoted-sparkles-web-renderer
+youtube.com##ad-slot-renderer
+youtube.com##ytm-companion-ad-renderer
+youtube.com##ytm-companion-slot
+youtube.com##tp-yt-paper-dialog:has(ytd-enforcement-message-view-model)

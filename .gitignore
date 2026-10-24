@@ -5,3 +5,5 @@ xcuserdata/
 spikes/youtube-stream/results.json
 spikes/youtube-stream/ios-deep.jsonl
 Rinse.xcodeproj/
+filters/cache/
+__pycache__/

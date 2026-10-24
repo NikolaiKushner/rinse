@@ -38,6 +38,8 @@ targets:
     dependencies:
       - target: RinseYouTube_${platform}
       - target: RinseAds_${platform}
+      - target: RinsePrivacy_${platform}
+      - target: RinseCosmetic_${platform}
 
   # Safari Web Extension for youtube.com: strips ad payloads from the player, adds PiP and background playback.
   RinseYouTube:
@@ -63,17 +65,29 @@ targets:
         PRODUCT_NAME: RinseYouTube
         PRODUCT_BUNDLE_IDENTIFIER: com.nikolaikushner.rinse.youtube
 
-  # Content Blocker for the whole web: network and element-hiding rules from blockerList.json.
+  # Content Blockers for the whole web. Rules come from tools/filters/compile.py.
   RinseAds:
+    templates: [ContentBlocker]
+    templateAttributes: { name: Ads, id: ads, title: Rinse Ads }
+  RinsePrivacy:
+    templates: [ContentBlocker]
+    templateAttributes: { name: Privacy, id: privacy, title: Rinse Privacy }
+  RinseCosmetic:
+    templates: [ContentBlocker]
+    templateAttributes: { name: Cosmetic, id: cosmetic, title: Rinse Page Cleaner }
+
+targetTemplates:
+  ContentBlocker:
     type: app-extension
     platform: [iOS, macOS]
     sources:
-      - path: Extensions/Blockers/Ads
+      - path: Extensions/Blockers/${name}
         excludes: ["Info.plist"]
+      - Extensions/Blockers/Shared
     info:
-      path: Extensions/Blockers/Ads/Info.plist
+      path: Extensions/Blockers/${name}/Info.plist
       properties:
-        CFBundleDisplayName: Rinse Ads
+        CFBundleDisplayName: ${title}
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
@@ -81,5 +95,5 @@ targets:
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ContentBlockerRequestHandler
     settings:
       base:
-        PRODUCT_NAME: RinseAds
-        PRODUCT_BUNDLE_IDENTIFIER: com.nikolaikushner.rinse.ads
+        PRODUCT_NAME: Rinse${name}
+        PRODUCT_BUNDLE_IDENTIFIER: com.nikolaikushner.rinse.${id}

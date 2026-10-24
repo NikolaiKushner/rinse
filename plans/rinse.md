@@ -96,7 +96,10 @@ filters/sources.json                URL, лицензии и закреплён�
 - **Проверка:** таблица «платформа × источник × успех из 20 × троттлинг» в `docs/spikes/youtube-streams.md`. На Mac загружается через Safari → Develop → Add Temporary Extension, на iPhone и iPad — через Xcode-сборку из шага 3 (или через конвертер разово).
 - **Зависит от:** —
 
-### 2. Spike: лимиты и скорость Content Blocker на устройстве — S · `[ ]`
+### 2. Spike: лимиты и скорость Content Blocker на устройстве — S · `[~]`
+
+> **Частично (2026-10-24):** реальные списки дали 75,7k / 56,3k / 11k правил; `WKContentRuleListStore` на Mac компилирует их за 1,9 / 1,2 / 0,7 с без ошибок. Лимит 150k не упирались. Время на iPhone не замерено (приложение показывает ошибки перезагрузки блокеров).
+
 
 - **Почему вторым:** число блокеров и разбиение списков зависят от реального лимита правил на текущих iOS 27 и macOS 27.
 - **Файлы:** `spikes/blocker-limit/gen.py` (генератор N правил), `docs/spikes/blocker-limits.md`.
@@ -114,14 +117,20 @@ filters/sources.json                URL, лицензии и закреплён�
 - **Проверка:** `xcodegen && xcodebuild -scheme Rinse -destination 'generic/platform=iOS Simulator' build` и то же для `platform=macOS`. Оба расширения появляются в настройках Safari на симуляторе и на Mac, тестовое правило блокирует `example.com/ads.js`.
 - **Зависит от:** —
 
-### 4. Компилятор фильтров (сетевые правила) — M · `[ ]`
+### 4. Компилятор фильтров (сетевые правила) — M · `[x]`
+
+> **Итог (2026-10-24):** сделан на Python (`tools/filters/compile.py`), а не на Swift: он нужен только при сборке, а перенос на устройство отложен вместе с обновлением списков без релиза. 23 unit-теста (`python3 -m unittest discover -s tools/filters`), проверка WebKit (`tools/filters/validate.swift`), отбраковка невалидных селекторов (`tools/filters/check-selectors.swift` → `filters/invalid-selectors.txt`). Домены `site.*` в косметике переводятся в url-filter страницы.
+
 
 - **Файлы:** `tools/FilterCompiler/Package.swift`, `Sources/FilterCompiler/{Parser.swift,NetworkRule.swift,SafariEmitter.swift,main.swift}`, `Tests/FilterCompilerTests/NetworkRuleTests.swift`, `filters/sources.json`, `scripts/update-filters.sh`.
 - **Что делает:** разбирает `||domain^`, `|https://`, `*`, `^`, `@@` исключения, `$third-party`, `$domain=`, `$script/$image/$stylesheet/$font/$media/$xmlhttprequest/$subdocument`. Выдаёт Safari JSON (`url-filter` в урезанном regex Safari, `if-domain`/`unless-domain`, `load-type`, `resource-type`, `ignore-previous-rules` для исключений). Неподдерживаемые правила пропускаются со счётчиком в отчёте. Правило дробится, если в нём больше одного домена.
 - **Проверка:** `swift test --package-path tools/FilterCompiler` с фикстурами «строка фильтра → ожидаемый JSON» (≥ 30 кейсов, включая исключения и `$domain=~`). `scripts/update-filters.sh` печатает «принято / пропущено» по каждому списку.
 - **Зависит от:** 2 (лимиты). *Можно параллельно с шагами 6–7.*
 
-### 5. Четыре блокера на реальных списках — M · `[ ]`
+### 5. Четыре блокера на реальных списках — M · `[~]`
+
+> **Сделано три из четырёх (2026-10-24):** Ads (EasyList + RU AdList + `filters/rinse.txt`, сеть), Privacy (EasyPrivacy), Page Cleaner (косметика всех списков). Annoyances не делали. d3ward-тест и регрессия на 10 сайтах ещё не проводились. Известное ограничение: CSS-инъекции и скриптлеты (казино-брендинг фоном `body` на HDrezka, VAST в плеере) Content Blocker'ом не убрать — это задача для веб-расширения на `<all_urls>` (в «Отложено»).
+
 
 - **Файлы:** `Extensions/Blockers/{Ads,Privacy,Cosmetic,Annoyances}/…`, `project.yml` (ещё 3 таргета), `Sources/FilterCompiler/CosmeticRule.swift` (`##sel`, `domain##sel`, `#@#` → `css-display-none`), `Tests/FilterCompilerTests/CosmeticRuleTests.swift`.
 - **Что делает:** скомпилированные EasyList, EasyPrivacy и Fanboy Annoyances раскладываются по блокерам в пределах лимита из шага 2. Generic-селекторы объединяются пачками по ~50 в одно правило, чтобы экономить лимит.

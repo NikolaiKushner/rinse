@@ -1,0 +1,116 @@
+#Billboard {height:0px;}
+#G32 {grid-template-rows:unset;}
+#__next [data-test-id="header"] + div > [data-tid]:first-child {min-height:0;}
+#appPromoModal {display:none;}
+#b-page-frame > * {pointer-events:auto;}
+#b-page-frame {padding-top:0;}
+#b-page-frame {pointer-events:none;}
+#banner-mnz-topleft {height:80px;}
+#content {margin-top:0;}
+#custom-background-css {remove:true;}
+#dfpPrerollDelay {remove:true;}
+#downloadAdModal {remove:true;}
+#error.modal {remove:true;}
+#globalcontent {margin-top:0;padding-top:0;}
+#o-site-hr__leaderboard-wallpaper.u-show-for-xlarge {remove:true;}
+#readerChromeOverlayBottom.readerChromeOverlayBottom-banner-desktop {bottom:0 !important;}
+#tie-popup-adblock {remove:true;}
+#tryitLeaderboard ~ #container {top:48px;}
+#workspace-wrapper > [id][style*="height"] {height: 100% !important}
+#wp-custom-css {remove:true;}
+.TablesTitle > div:not([style="padding"]) {width:100%;}
+.above_body {margin-bottom:0;}
+.ads-top-container {min-height:0;margin-bottom:0;}
+.app__page > div > div:first-child {min-height:0;}
+.app__page > div:first-child {min-height:0;}
+.b_flowup {remove:true;}
+.banner-spacer-top {max-height: 50px !important;}
+.bg-white\/50.border.p-8 {visibility:hidden !important;}
+.cUDaEv {margin-top:162px !important;}
+.clean-grid-grid-post:has(> [id^="otomi-"] + .clean-grid-grid-post-details-full) {remove:true;}
+.content > div[class]:not([class*="-"]) {min-height:40px !important;}
+.content {max-width:100%;}
+.content-wrap #inner-wrap {height:100vh;}
+.featured-manga, .header-spot, .pagination-image {min-height:0 !important;}
+.gZyLpV .mobile-header {margin-top:0 !important;}
+.header {top:0;}
+.iOxiqE .mobile-header {margin-top:0 !important;}
+.inviewSection:not(.is-show):style(transform: translateY(0) !important; opacity: 1 !important;)
+.layout__content > .js-topic:has(.topic-header__erid) {remove:true;}
+.layout__content > [id^="newsBody_news-"] ~ [id^="articleBody_articles-"] {remove:true;}
+.main-header {top:0;}
+.map {top:52px;}
+.n-main-branding-container {margin-top:0;}
+.nav.sticky {top:0px;}
+.navigation--has-subnav {top:0;}
+.page-width {margin-top:0;}
+.site-header {top:0;}
+.sticky ~ header {top:0;}
+.sticky ~ header {top:0px;}
+.ten_ears_wrap {margin-top:0;background-color:#a5a5a5;}
+.ten_topbar + div:not(.ten_ears_wrap) {display:none;}
+.ten_topbar {max-height:10px;}
+.top-content > div[class]:not([class*="-"]) {min-height:40px !important;}
+.topic-body__content> .box-external-video:last-child {remove:true;}
+.topic-footer > div[class^="box-"][class$="-video"] {remove:true;}
+.trytopnav {top:0;}
+.video-player--stream-display-ad_lower-third {height:100% !important;}
+.vk-video-popup {remove:true;}
+:-abp-properties(*data:image*)
+:-abp-properties(base64)
+:-abp-properties(data:)
+:-abp-properties(float: right; margin-top: 30px; width: 50%;)
+:-abp-properties(height: 300px; width: 315px;)
+:-abp-properties(image/)
+[class*="scroll-to-site"] {remove:true;}
+[data-ns-portal] .branding[data-page] {margin-top:unset;width:100%;}
+[data-testid="commercial-above-header-box-1"] {remove:true;}
+[data-tid="a913e1e7"] {min-height:0;}
+[role="banner"] {top:0 !important}
+a.over-hiddenlink-html[href*="://market.yandex.ru/"][target="_blank"] {pointer-events:none;color:inherit;}
+a.over-hiddenlink-html[href*="erid="][target="_blank"] {pointer-events:none;color:inherit;}
+a[href*="erid="] {pointer-events:none;color:inherit;}
+a[href*="erid="]:not([href^="/"]):not([href^="https://lifehacker.ru/"]) {pointer-events:none;border-bottom:none;color:inherit;}
+article:has(header:has(.ct-sponsored))
+aside {background:transparent;}
+body > * {pointer-events:auto;}
+body > .menu_wrap {position:relative;}
+body > .wrap {top:0;}
+body > div[class]:not([id]):not([style]) {background-image:none;}
+body > style[id] {remove:true;}
+body style:has-text(margin-top: 1) {remove:true;}
+body {background-image:none;background-color:inherit;}
+body {background-image:none;cursor:auto;pointer-events:none;}
+body {background-image:none;}
+body {background:none;}
+body {cursor:default;}
+body {overflow:auto;}
+body {padding-top:0;}
+body {pointer-events:none;}
+body.branded:not([id]):not([style]) > #wrapper:not([class]):not([style]) {margin-top:unset;}
+body.modal-open > .modal-backdrop {display:none;}
+body.modal-open {overflow:auto;padding-right:0;}
+body:has(#register_link) > canvas {remove:true;}
+body[class*="body"] {overflow:auto;}
+body[class^="has-brand"][class*=" active-brand"][class*="fixed-header"] > [id$="er"]:nth-child(-n+3) {width:unset;}
+body[class^="has-brand"][class*=" active-brand"][class*="fixed-header"] {padding-top:0;background-color:inherit;}
+body[style="opacity: 0;"]:style(opacity: 1 !important;)
+div > [style]:has([style]:has([href*="&utm"]))
+div[data-test-id="MainDiscoveryContent"] li:has(> div.cb-elevated:has(button[data-test-id="AdvertisingLabel"]))
+div[style^="position:"][style*=" top: 0px; left: 0px; width: 100%; height: 100%;"][style*="z-index:"][style*="cursor: pointer;"] {display:none}
+footer {max-width:100%;}
+head > style:has-text(/adchoice|mkit_|outlineBanner/i) {remove:true;}
+head > style:has-text(min-height:301px;) {remove:true;}
+html.overflow-hidden .js-popup-promo {display:none;}
+html.overflow-hidden {overflow:auto;}
+html:not(.dark) > body {background-color:inherit}
+html[class^="loading"]:style(visibility: visible !important;)
+html[style*="overflow: hidden;"] {overflow:auto;}
+html[xmlns] > body > script + script + style {remove:true;}
+iframe[src] {pointer-events:auto}
+main > .content-grid {grid-template-columns:unset;}
+main > div:has(> section [href="/tags/partnyorskij-material/"]) > article a[href]:not([href^="/"]):not([href^="https://kanobu.ru/"]) {pointer-events:none;color:inherit;}
+main {margin-top:10px;}
+main.main_div {margin-top:0;max-width:100%;border-radius:inherit;background-size:unset;}
+p + div:has(.responsive-post:has([href^="https://www.semrush.com"]))
+style:has-text(lb-banner-height) {remove:true;}

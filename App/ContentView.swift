@@ -3,18 +3,19 @@ import SwiftUI
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var states: [RinseExtension: Bool?] = [:]
+    @State private var reloadErrors: [RinseExtension: String] = [:]
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
                     ForEach(RinseExtension.allCases) { ext in
-                        ExtensionRow(ext: ext, enabled: states[ext] ?? nil)
+                        ExtensionRow(ext: ext, enabled: states[ext] ?? nil, error: reloadErrors[ext])
                     }
                 } header: {
                     Text("Extensions")
                 } footer: {
-                    Text("Turn on both extensions and allow Rinse for YouTube on youtube.com.")
+                    Text("Turn on all four and allow Rinse for YouTube on youtube.com.")
                 }
 
                 Section("How to turn them on") {
@@ -31,7 +32,10 @@ struct ContentView: View {
             .navigationTitle("Rinse")
             .refreshable { await refresh() }
         }
-        .task { await refresh() }
+        .task {
+            for ext in RinseExtension.allCases { reloadErrors[ext] = await ExtensionStatus.reload(ext) }
+            await refresh()
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await refresh() } }
         }
@@ -46,13 +50,13 @@ struct ContentView: View {
     #if os(macOS)
     private static let steps = [
         "Safari → Settings → Extensions",
-        "Turn on Rinse for YouTube and Rinse Ads",
+        "Turn on all Rinse extensions",
         "Rinse for YouTube → Edit Websites → youtube.com → Allow",
     ]
     #else
     private static let steps = [
         "Settings → Apps → Safari → Extensions",
-        "Turn on Rinse Ads",
+        "Turn on Rinse Ads, Privacy and Page Cleaner",
         "Rinse for YouTube → turn on, allow on youtube.com",
         "Or in Safari: tap the page menu → Manage Extensions",
     ]
@@ -62,16 +66,21 @@ struct ContentView: View {
 private struct ExtensionRow: View {
     let ext: RinseExtension
     let enabled: Bool?
+    let error: String?
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: ext.isContentBlocker ? "shield.lefthalf.filled" : "play.rectangle.fill")
+            Image(systemName: ext.symbol)
                 .font(.title2)
                 .foregroundStyle(.tint)
                 .frame(width: 32)
             VStack(alignment: .leading, spacing: 2) {
                 Text(ext.title).font(.headline)
                 Text(ext.subtitle).font(.caption).foregroundStyle(.secondary)
+                // Safari only loads rules for a blocker that is turned on, so an error is expected while it's off.
+                if let error, enabled == true {
+                    Text("Rules failed to load: \(error)").font(.caption).foregroundStyle(.red)
+                }
             }
             Spacer()
             switch enabled {
