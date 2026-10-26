@@ -4,7 +4,7 @@
 // Used for the d3ward adblock test and for checking that blocking doesn't break popular sites.
 //
 // Usage: swift tools/filters/try-url.swift <url> [--no-blockers] [--wait seconds]
-//          [--snapshot out.png] [--text] [--eval 'return …']
+//          [--snapshot out.png] [--text] [--eval 'return …'] [--mobile] [--height px]
 import AppKit
 import WebKit
 
@@ -15,6 +15,8 @@ let wait = args.firstIndex(of: "--wait").flatMap { Double(args[$0 + 1]) } ?? 8
 let snapshot = args.firstIndex(of: "--snapshot").map { args[$0 + 1] }
 let printText = args.contains("--text")
 let evalJS = args.firstIndex(of: "--eval").map { args[$0 + 1] }  // JS body that returns a string
+let mobile = args.contains("--mobile")  // iPhone-sized viewport and user agent
+let height = args.firstIndex(of: "--height").flatMap { Double(args[$0 + 1]) }  // taller viewport for long snapshots
 
 final class Nav: NSObject, WKNavigationDelegate {
     var done: CheckedContinuation<Void, Never>?
@@ -48,9 +50,13 @@ Task { @MainActor in
             config.userContentController.add(list)
         }
     }
-    let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1280, height: 900), styleMask: [.titled], backing: .buffered, defer: false)
+    var viewport = mobile ? NSSize(width: 440, height: 956) : NSSize(width: 1280, height: 900)
+    if let height { viewport.height = height }
+    let window = NSWindow(contentRect: NSRect(origin: .zero, size: viewport), styleMask: [.titled], backing: .buffered, defer: false)
     let web = WKWebView(frame: window.contentView!.bounds, configuration: config)
-    web.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    web.customUserAgent = mobile
+        ? "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1"
+        : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
     window.contentView!.addSubview(web)
     window.orderBack(nil)
     let nav = Nav()

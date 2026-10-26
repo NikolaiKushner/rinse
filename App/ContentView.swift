@@ -83,6 +83,12 @@ struct ContentView: View {
         }
     }
 
+    #if os(macOS)
+    private static let webExtensionStateKnown = true
+    #else
+    private static let webExtensionStateKnown = false
+    #endif
+
     private var groupedBackground: Color {
         #if os(iOS)
         Color(uiColor: .systemGroupedBackground)
@@ -93,6 +99,10 @@ struct ContentView: View {
 
     /// Makes Safari recompile every blocker's rules. Runs on launch, so a new build's lists take effect.
     private func reloadRules() async {
+        #if DEBUG
+        // Screenshot mode: Safari can't reload blockers in the simulator; don't show its errors.
+        if ProcessInfo.processInfo.arguments.contains("-RinseScreenshots") { await refresh(); return }
+        #endif
         guard !reloading else { return }
         reloading = true
         for ext in RinseExtension.allCases where ext.isContentBlocker {
@@ -106,6 +116,13 @@ struct ContentView: View {
     /// One refresh at a time: launch, pull-to-refresh and coming back to the app can all ask at
     /// once, and overlapping SafariServices calls are what crashed the app on launch.
     private func refresh() async {
+        #if DEBUG
+        // App Store screenshots: `-RinseScreenshots` shows everything as turned on.
+        if ProcessInfo.processInfo.arguments.contains("-RinseScreenshots") {
+            states = Dictionary(uniqueKeysWithValues: RinseExtension.allCases.map { ($0, $0.isContentBlocker || Self.webExtensionStateKnown ? true : nil) })
+            return
+        }
+        #endif
         if refreshing { refreshAgain = true; return }
         refreshing = true
         repeat {
