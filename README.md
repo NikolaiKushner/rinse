@@ -142,7 +142,7 @@ To see Rinse's state on a YouTube page, run `localStorage.setItem("rinse-debug",
 | `scripts/` | `run.sh`, `update-filters.sh`, icon generator |
 | `site/` | Website for GitHub Pages: landing, privacy policy, support (EN + RU) |
 | `Config/PrivacyInfo.xcprivacy` | Privacy manifest bundled in the app and every extension |
-| `docs/appstore/` | App Store listing (EN + RU), review notes, raw and finished screenshots (`tools/appstore/make-screenshots.sh`) |
+| `docs/appstore/` | App Store listing (EN + RU), review notes, screenshots and their gallery (`gallery.html`); built by `tools/appstore/make-screenshots.sh` and `gallery.py` |
 | `plans/`, `docs/spikes/` | Implementation plan and research notes |
 | `spikes/` | Throwaway experiments and their tests, kept for reference |
 

@@ -63,7 +63,12 @@ Task { @MainActor in
     web.navigationDelegate = nav
     await withCheckedContinuation { cont in
         nav.done = cont
-        web.load(URLRequest(url: url))
+        if url.isFileURL {
+            // Local mocks (docs/appstore/mocks): allow reading sibling folders such as ../raw.
+            web.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent().deletingLastPathComponent())
+        } else {
+            web.load(URLRequest(url: url))
+        }
     }
     try await Task.sleep(for: .seconds(wait))
     if let json = try? await web.callAsyncJavaScript(metrics, contentWorld: .page) as? String,

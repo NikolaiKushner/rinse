@@ -1,0 +1,140 @@
+<!doctype html>
+<!-- Drawn mocks for App Store screenshots, rendered by tools/filters/try-url.swift.
+     ?view=video|popup  &layout=phone|desktop  &lang=en|ru
+     No third-party branding: the video page is a generic player, not YouTube's UI. -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font: 15px/1.35 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; color: #0f0f10; background: #fff; overflow: hidden; }
+
+  /* --- Video page --- */
+  .bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #eee; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; }
+  .logo i { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #6a82fb, #fc5c7d); position: relative; }
+  .logo i::after { content: ""; position: absolute; left: 10px; top: 8px; border: 5px solid transparent; border-left: 8px solid #fff; }
+  .search { flex: 1; height: 36px; border-radius: 18px; background: #f2f2f2; display: flex; align-items: center; padding: 0 14px; color: #888; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #f7b267, #f25c54); }
+
+  .player { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #000; }
+  .scene { position: absolute; inset: 0; background: linear-gradient(#ffb36b 0%, #ff8a5c 32%, #c3567a 58%, #3b2f63 100%); }
+  .sun { position: absolute; width: 22%; aspect-ratio: 1; border-radius: 50%; left: 56%; top: 30%; background: radial-gradient(#fff6cf, #ffd36b 60%, rgba(255,211,107,0) 70%); }
+  .m1, .m2, .m3 { position: absolute; left: -5%; right: -5%; bottom: 0; }
+  .m1 { height: 62%; background: #6b4a8a; clip-path: polygon(0 60%, 14% 30%, 27% 55%, 41% 18%, 57% 52%, 70% 28%, 86% 58%, 100% 35%, 100% 100%, 0 100%); opacity: .85; }
+  .m2 { height: 48%; background: #3e2f66; clip-path: polygon(0 55%, 18% 25%, 33% 60%, 50% 20%, 64% 58%, 80% 30%, 100% 62%, 100% 100%, 0 100%); }
+  .m3 { height: 30%; background: #21193d; clip-path: polygon(0 40%, 22% 70%, 40% 35%, 58% 72%, 76% 42%, 100% 70%, 100% 100%, 0 100%); }
+  .controls { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 12px 10px; background: linear-gradient(transparent, rgba(0,0,0,.55)); }
+  .progress { height: 4px; border-radius: 2px; background: rgba(255,255,255,.35); margin-bottom: 10px; }
+  .progress b { display: block; width: 38%; height: 100%; border-radius: 2px; background: #fff; position: relative; }
+  .progress b::after { content: ""; position: absolute; right: -6px; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
+  .row { display: flex; align-items: center; gap: 14px; color: #fff; font-size: 13px; font-weight: 600; }
+  .pause { width: 14px; height: 16px; border-left: 4px solid #fff; border-right: 4px solid #fff; }
+  .row .t { margin-right: auto; }
+  .noads { position: absolute; left: 12px; top: 12px; display: flex; align-items: center; gap: 6px; padding: 6px 11px 6px 8px; border-radius: 999px;
+           background: rgba(22, 163, 74, .95); color: #fff; font-weight: 700; font-size: 13px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .noads i { width: 16px; height: 16px; border-radius: 50%; background: #fff; position: relative; }
+  .noads i::after { content: ""; position: absolute; left: 5px; top: 2px; width: 4px; height: 8px; border: solid #16a34a; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+  .info { padding: 14px 16px 6px; }
+  .info h1 { font-size: 18px; line-height: 1.25; margin: 0 0 6px; }
+  .meta { color: #666; font-size: 13px; }
+  .channel { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
+  .channel .avatar { width: 38px; height: 38px; background: linear-gradient(135deg, #43c6ac, #191654); }
+  .channel b { display: block; }
+  .channel span { color: #666; font-size: 12px; }
+  .follow { margin-left: auto; padding: 8px 16px; border-radius: 999px; background: #0f0f10; color: #fff; font-weight: 600; font-size: 14px; }
+  .actions { display: flex; gap: 8px; padding: 4px 16px 14px; }
+  .actions span { padding: 7px 14px; border-radius: 999px; background: #f2f2f2; font-size: 13px; font-weight: 600; }
+  .next { padding: 4px 16px; }
+  .next h2 { font-size: 16px; margin: 6px 0 10px; }
+  .item { display: flex; gap: 12px; margin-bottom: 12px; }
+  .thumb { flex: none; width: 168px; aspect-ratio: 16 / 9; border-radius: 10px; position: relative; overflow: hidden; }
+  .thumb em { position: absolute; right: 6px; bottom: 6px; padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,.75); color: #fff; font-size: 11px; font-style: normal; font-weight: 600; }
+  .item b { display: block; font-size: 14px; line-height: 1.3; margin-bottom: 4px; }
+  .item span { color: #666; font-size: 12px; }
+  .g1 { background: linear-gradient(160deg, #a8e063, #56ab2f 55%, #134e5e); }
+  .g2 { background: linear-gradient(160deg, #89f7fe, #66a6ff 50%, #1e3c72); }
+  .g3 { background: linear-gradient(160deg, #fbd786, #f7797d 55%, #6a3093); }
+  .g4 { background: linear-gradient(160deg, #e0eafc, #9bb5d8 50%, #3a4a6b); }
+  .g5 { background: linear-gradient(160deg, #ffe259, #ffa751 55%, #b24592); }
+
+  /* Desktop layout: player on the left, list on the right. */
+  .desktop .layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; padding: 20px 28px; }
+  .desktop .player { border-radius: 14px; }
+  .desktop .info, .desktop .channel, .desktop .actions { padding-left: 0; padding-right: 0; }
+  .desktop .info h1 { font-size: 22px; }
+  .desktop .next { padding: 0; }
+  .desktop .thumb { width: 168px; }
+  .desktop .bar { padding: 14px 28px; }
+  .desktop .search { max-width: 560px; margin: 0 auto; }
+
+  /* --- Popup over a page --- */
+  .page { position: absolute; inset: 0; background-size: cover; background-position: top center; }
+  .dim { position: absolute; inset: 0; background: rgba(0, 0, 0, .28); }
+  .sheet { position: absolute; left: 10px; right: 10px; bottom: 12px; border-radius: 26px; background: rgba(250,250,252,.97);
+           box-shadow: 0 -6px 40px rgba(0,0,0,.25); padding: 18px 18px 22px; }
+  .sheet .grab { width: 38px; height: 5px; border-radius: 3px; background: #c7c7cc; margin: -6px auto 14px; }
+  .sheet .exts { color: #6e6e73; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; margin: 0 4px 10px; }
+  .card { background: #fff; border-radius: 16px; padding: 16px 16px 18px; box-shadow: 0 1px 0 rgba(0,0,0,.04); }
+  .head { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+  .head img { width: 34px; height: 34px; border-radius: 9px; }
+  .site { margin: 14px 0 2px; font-weight: 700; font-size: 17px; }
+  .status { margin: 0 0 14px; color: #1a7f37; font-size: 15px; }
+  .btn { width: 100%; padding: 13px; border: 0; border-radius: 12px; background: #e5e5ea; color: #1c1c1e; font: 600 16px -apple-system, sans-serif; }
+  .note { color: #6e6e73; font-size: 13px; margin: 12px 4px 0; }
+  .desktop-popup .sheet { left: auto; right: 150px; top: 8px; bottom: auto; width: 330px; border-radius: 14px; padding: 14px; }
+  .desktop-popup .sheet .grab, .desktop-popup .sheet .exts { display: none; }
+  .desktop-popup .card { box-shadow: none; padding: 4px; }
+  .desktop-popup .dim { background: rgba(0,0,0,.12); }
+  .desktop-popup .sheet::before { content: ""; position: absolute; top: -8px; right: 40px; border: 8px solid transparent; border-top: 0; border-bottom-color: rgba(250,250,252,.97); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const view = q.get("view") || "video", layout = q.get("layout") || "phone", ru = q.get("lang") === "ru";
+const T = ru ? {
+  search: "Поиск", title: "Рассвет в горах — 4K, без слов", meta: "1,2 млн просмотров · 3 дня назад",
+  channel: "Природа рядом", subs: "248 тыс. подписчиков", follow: "Подписаться", noads: "Без рекламы",
+  like: "👍 12 тыс.", share: "Поделиться", save: "Сохранить", next: "Дальше",
+  items: [["Северное сияние над фьордами", "Природа рядом · 840 тыс."], ["Тихий океан: 3 часа волн", "Звуки моря · 2,1 млн"], ["Лавандовые поля Прованса", "Путь · 512 тыс."], ["Город просыпается: таймлапс", "Утро · 1,4 млн"], ["Пустыня ночью: звёзды", "Небо · 920 тыс."]],
+  site: "accuweather.com", on: "Rinse блокирует рекламу на этом сайте", off: "Выключить на этом сайте", exts: "Расширения",
+  hint: "Сайт сломался? Выключите Rinse только на нём.",
+} : {
+  search: "Search", title: "Sunrise over the mountains — 4K, no talking", meta: "1.2M views · 3 days ago",
+  channel: "Nature Nearby", subs: "248K subscribers", follow: "Subscribe", noads: "No ads",
+  like: "👍 12K", share: "Share", save: "Save", next: "Up next",
+  items: [["Northern lights over the fjords", "Nature Nearby · 840K"], ["Pacific Ocean: 3 hours of waves", "Sea Sounds · 2.1M"], ["Lavender fields of Provence", "Wander · 512K"], ["A city wakes up: time-lapse", "Morning · 1.4M"], ["The desert at night: stars", "Night Sky · 920K"]],
+  site: "accuweather.com", on: "Rinse is blocking ads on this site", off: "Turn off on this site", exts: "Extensions",
+  hint: "Site broken? Turn Rinse off just there.",
+};
+const dur = ["12:41", "3:02:15", "8:16", "4:55", "10:03"];
+const root = document.getElementById("root");
+
+if (view === "video") {
+  document.body.classList.toggle("desktop", layout === "desktop");
+  const player = `<div class="player"><div class="scene"><div class="sun"></div><div class="m1"></div><div class="m2"></div><div class="m3"></div></div>
+    <div class="noads"><i></i>${T.noads}</div>
+    <div class="controls"><div class="progress"><b></b></div><div class="row"><div class="pause"></div><span class="t">4:48 / 12:41</span><span>HD</span><span>⛶</span></div></div></div>`;
+  const info = `<div class="info"><h1>${T.title}</h1><div class="meta">${T.meta}</div></div>
+    <div class="channel"><div class="avatar"></div><div><b>${T.channel}</b><span>${T.subs}</span></div><div class="follow">${T.follow}</div></div>
+    <div class="actions"><span>${T.like}</span><span>${T.share}</span><span>${T.save}</span></div>`;
+  const next = `<div class="next"><h2>${T.next}</h2>${T.items.map(([t, m], i) => `<div class="item"><div class="thumb g${i + 1}"><em>${dur[i]}</em></div><div><b>${t}</b><span>${m}</span></div></div>`).join("")}</div>`;
+  const bar = `<div class="bar"><div class="logo"><i></i>Video</div><div class="search">${T.search}</div><div class="avatar"></div></div>`;
+  root.innerHTML = layout === "desktop" ? bar + `<div class="layout"><div>${player}${info}</div>${next}</div>` : bar + player + info + next;
+} else {
+  document.body.classList.toggle("desktop-popup", layout === "desktop");
+  const bg = q.get("bg") || "";
+  root.innerHTML = `<div class="page" style="background-image:url('${bg}')"></div><div class="dim"></div>
+    <div class="sheet"><div class="grab"></div><div class="exts">${T.exts}</div>
+      <div class="card"><div class="head"><img src="../raw/icon.png" alt="">Rinse</div>
+        <div class="site">${T.site}</div><p class="status">${T.on}</p><button class="btn">${T.off}</button></div>
+      <p class="note">${T.hint}</p></div>`;
+}
+</script>
+</body>
+</html>
