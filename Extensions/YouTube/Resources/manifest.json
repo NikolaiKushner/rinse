@@ -38,7 +38,9 @@
     "persistent": false
   },
   "permissions": [
-    "scripting"
+    "nativeMessaging",
+    "scripting",
+    "storage"
   ],
   "host_permissions": [
     "*://*.youtube.com/*"

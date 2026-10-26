@@ -23,7 +23,7 @@
 Rinse is a Safari extension app in the spirit of [Vinegar](https://andadinosaur.com/vinegar), with a site-wide ad blocker built in.
 
 - **YouTube without ads.** Ads are cut out of the player data before they load. Anything that still slips through is muted, played at 16× and skipped automatically.
-- **Background playback on iPhone.** Lock the screen or switch apps and the video keeps playing. Pausing from the Lock Screen still works.
+- **Background playback, if you want it.** Turn on *Keep playing in the background* in the Rinse app, and the video keeps playing when you lock the screen or switch apps. Pausing from the Lock Screen still works. It's off by default, so YouTube pauses as usual.
 - **Ads and trackers blocked on every site.** Three Safari content blockers carry about 143,000 rules from EasyList, EasyPrivacy and RU AdList, plus Rinse's own rules.
 - **Private by design.** The content blockers never see the pages you visit: Safari applies the rules itself. The YouTube extension only asks for access to `youtube.com`. Nothing is collected or sent anywhere.
 
@@ -31,7 +31,7 @@ Rinse is a Safari extension app in the spirit of [Vinegar](https://andadinosaur.
 
 | Extension | What it does | Access |
 |---|---|---|
-| **Rinse for YouTube** | Strips ad payloads from the player, skips stitched ads, keeps playback alive in the background | `youtube.com` only |
+| **Rinse for YouTube** | Strips ad payloads from the player, skips stitched ads, optional background playback | `youtube.com` only |
 | **Rinse Ads** | Blocks ad networks (EasyList + RU AdList network rules, 75.7k) | none |
 | **Rinse Privacy** | Blocks trackers and analytics (EasyPrivacy, 56.3k) | none |
 | **Rinse Page Cleaner** | Hides leftover ad slots, banners and brandings (element hiding, 11k) | none |
@@ -61,7 +61,7 @@ flowchart LR
 
 1. `page.js` runs in YouTube's own JS world and deletes the ad fields from player responses before the player reads them. It's injected through `scripting.executeScript`, because YouTube's CSP blocks a plain `<script src>`.
 2. Some ads are stitched into the stream itself and never appear in JSON. For those, `content.js` watches for the player's `ad-showing` state, then mutes the ad, plays it at 16× and presses Skip, finding the button by its label.
-3. For background playback, `content.js` swallows `visibilitychange`, `pagehide`, `blur` and `freeze` before YouTube sees them. If iOS still pauses the video while going to the background, it resumes it.
+3. Background playback is off by default. The app stores the setting in an App Group, the extension's native handler reads it, and `content.js` caches it in `storage.local` and sets `<html data-rinse-background>` for `page.js`. When it's on, `content.js` swallows `visibilitychange`, `pagehide`, `blur` and `freeze` before YouTube sees them, `page.js` reports the page as visible, and if iOS still pauses the video while going to the background, it's resumed.
 
 **Everything else.** `tools/filters/compile.py` converts Adblock Plus syntax into Safari's content-blocker JSON:
 
@@ -153,7 +153,7 @@ Inspired by Vinegar by And a Dinosaur. Rinse is not affiliated with YouTube or G
 **Rinse** — набор расширений Safari для iPhone, iPad и Mac.
 
 - **YouTube без рекламы.** Рекламные данные вырезаются из ответов плеера. Если реклама всё-таки появляется, она идёт без звука на скорости ×16 и пропускается автоматически.
-- **Фоновое воспроизведение на iPhone.** Видео продолжает играть при заблокированном экране и при переключении на другое приложение.
+- **Фоновое воспроизведение по желанию.** По умолчанию выключено. Если включить в приложении Rinse переключатель *Keep playing in the background*, видео продолжит играть при заблокированном экране и при переключении на другое приложение.
 - **Блокировка рекламы и трекеров на всех сайтах.** Около 143 тыс. правил из EasyList, EasyPrivacy и RU AdList, плюс собственные правила Rinse (например, против казино-брендинга на HDrezka).
 - **Без сбора данных.** Блокеры не видят страниц, которые вы открываете: правила применяет сам Safari. YouTube-расширению нужен доступ только к `youtube.com`.
 

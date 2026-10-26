@@ -20,7 +20,7 @@ enum RinseExtension: String, CaseIterable, Identifiable {
 
     var subtitle: String {
         switch self {
-        case .youtube: "No ads on YouTube, Picture in Picture, background playback"
+        case .youtube: "No ads on YouTube, optional background playback"
         case .ads: "Blocks ad networks on every site"
         case .privacy: "Blocks trackers and analytics"
         case .cosmetic: "Hides leftover ad slots and banners"

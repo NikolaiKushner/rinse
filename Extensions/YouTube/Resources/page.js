@@ -1,7 +1,8 @@
 // Page script: runs in YouTube's own JS world, injected by content.js.
 // Does only what needs YouTube's JS world:
 // 1. Prunes ad payloads out of player responses (initial page data, fetch, XHR).
-// 2. Hides "page went to the background" signals from YouTube's code, so it doesn't pause.
+// 2. Hides "page went to the background" signals from YouTube's code, so it doesn't pause,
+//    when background playback is on in the Rinse app.
 // Everything else (badge, ad skipping, background resume, PiP) lives in content.js, which
 // still works if YouTube's CSP blocks this file.
 // Reports to content.js through <html data-rinse-page="…">. Logs with a [rinse] prefix.
@@ -71,15 +72,24 @@
     return origOpen.call(this, method, url, ...rest);
   };
 
-  // YouTube pauses when it sees the page hidden or unfocused. These overrides only affect
-  // YouTube's JS world; content.js still sees the real values.
+  // Background playback (only when turned on in the Rinse app; content.js sets the flag):
+  // YouTube pauses when it sees the page hidden or unfocused, so hide that from it. The
+  // overrides only affect YouTube's JS world; content.js still sees the real values.
+  const backgroundOn = () => root.dataset.rinseBackground === "1";
   for (const [prop, value] of [["hidden", false], ["webkitHidden", false], ["visibilityState", "visible"], ["webkitVisibilityState", "visible"]]) {
-    Object.defineProperty(Document.prototype, prop, { get: () => value, configurable: true });
+    const real = Object.getOwnPropertyDescriptor(Document.prototype, prop)?.get;
+    if (!real) continue;
+    Object.defineProperty(Document.prototype, prop, {
+      get() { return backgroundOn() ? value : real.call(this); },
+      configurable: true,
+    });
   }
-  Document.prototype.hasFocus = () => true;
+  const realHasFocus = Document.prototype.hasFocus;
+  Document.prototype.hasFocus = function () { return backgroundOn() || realHasFocus.call(this); };
   for (const ev of ["visibilitychange", "webkitvisibilitychange", "pagehide", "blur", "freeze"]) {
-    window.addEventListener(ev, (e) => e.stopImmediatePropagation(), true);
-    document.addEventListener(ev, (e) => e.stopImmediatePropagation(), true);
+    const swallow = (e) => { if (backgroundOn()) e.stopImmediatePropagation(); };
+    window.addEventListener(ev, swallow, true);
+    document.addEventListener(ev, swallow, true);
   }
 
   log("page script installed", location.href);

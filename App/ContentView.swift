@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var states: [RinseExtension: Bool?] = [:]
     @State private var reloads: [RinseExtension: ReloadResult] = [:]
     @State private var reloading = false
+    @AppStorage(RinseSettings.backgroundPlaybackKey, store: RinseSettings.store) private var backgroundPlayback = false
 
     var body: some View {
         NavigationStack {
@@ -21,6 +22,16 @@ struct ContentView: View {
                     Text("Extensions")
                 } footer: {
                     Text("Turn on all four and allow Rinse for YouTube on youtube.com.")
+                }
+
+                Section {
+                    Toggle(isOn: $backgroundPlayback) {
+                        Label("Keep playing in the background", systemImage: "play.circle")
+                    }
+                } header: {
+                    Text("YouTube")
+                } footer: {
+                    Text("When off, YouTube pauses as usual when you leave Safari or lock the screen. Applies the next time a YouTube page loads.")
                 }
 
                 Section("How to turn them on") {

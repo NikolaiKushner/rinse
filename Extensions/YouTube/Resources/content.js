@@ -2,7 +2,8 @@
 // YouTube's CSP can't block it, so everything that only needs the DOM lives here:
 //   - injects page.js (JSON ad pruning, visibility spoofing) and reports whether it ran
 //   - skips ads stitched into the stream: mute, 16x, press Skip
-//   - resumes playback when iOS pauses the video on going to the background
+//   - background playback, only when turned on in the Rinse app (off by default): hides
+//     "page went to the background" from YouTube and resumes the video if iOS pauses it
 //   - status badge and PiP button, only in debug mode:
 //     run localStorage.setItem("rinse-debug", "1") in the page console, then reload
 const log = (...a) => console.log("[rinse:content]", ...a);
@@ -11,12 +12,34 @@ const state = { page: "loading", pruned: 0, skipped: 0, resumed: 0, failed: 0 };
 // Shown in the badge while an ad plays, to see from a screenshot which step doesn't take.
 const adDebug = { skip: "none", clicks: 0, rate: 1, left: "" };
 
+// --- Settings ------------------------------------------------------------------------------
+// From the Rinse app, via background.js → native handler → App Group. The last known value is
+// cached in storage.local so it applies right away on the next page load. page.js reads it
+// from <html data-rinse-background>, because it runs in YouTube's world without extension APIs.
+const settings = { backgroundPlayback: false };
+let settingsFresh = false;
+function applySettings(next, fresh) {
+  if (!next || (settingsFresh && !fresh)) return;
+  settingsFresh ||= fresh;
+  settings.backgroundPlayback = next.backgroundPlayback === true;
+  root.dataset.rinseBackground = settings.backgroundPlayback ? "1" : "0";
+  render();
+}
+root.dataset.rinseBackground = "0";
+browser.storage.local.get("settings").then((r) => applySettings(r?.settings, false), () => {});
+browser.runtime.sendMessage({ type: "get-settings" }).then((res) => {
+  if (!res?.ok) return log("settings unavailable:", res?.error);
+  applySettings(res.settings, true);
+  browser.storage.local.set({ settings: res.settings });
+}, (err) => log("settings unavailable:", err));
+
 // --- page.js injection -------------------------------------------------------------------
 // In the isolated world, document.hidden is the real value: page.js's overrides don't reach here.
 // Registered now, before page.js exists, so page.js's event blockers can't swallow it.
 let hiddenAt = 0;
 let lastPause = null;
 window.addEventListener("visibilitychange", (e) => {
+  if (!settings.backgroundPlayback) return;
   hiddenAt = document.hidden ? performance.now() : 0;
   if (document.hidden) resumeIfPausedBy("pause just before going to background", lastPause, 1500);
   e.stopImmediatePropagation();
@@ -25,7 +48,9 @@ window.addEventListener("visibilitychange", (e) => {
 // registered before any of YouTube's, so YouTube never hears that the page went to the
 // background. (Its reads of document.hidden are faked by page.js, when that gets to run.)
 for (const ev of ["webkitvisibilitychange", "pagehide", "blur", "freeze"]) {
-  window.addEventListener(ev, (e) => { if (e.target === window || e.target === document) e.stopImmediatePropagation(); }, true);
+  window.addEventListener(ev, (e) => {
+    if (settings.backgroundPlayback && (e.target === window || e.target === document)) e.stopImmediatePropagation();
+  }, true);
 }
 
 const script = document.createElement("script");
@@ -124,7 +149,7 @@ new MutationObserver(handleAds).observe(root, { attributes: true, attributeFilte
 // 2s of going hidden; later ones (lock screen, Control Center) are the user's and stay.
 document.addEventListener("pause", (e) => {
   const v = e.target;
-  if (!(v instanceof HTMLVideoElement) || v.ended) return;
+  if (!settings.backgroundPlayback || !(v instanceof HTMLVideoElement) || v.ended) return;
   lastPause = { v, t: performance.now() };
   if (document.hidden && hiddenAt) resumeIfPausedBy("paused by going to background", lastPause, 2000, hiddenAt);
 }, true);
@@ -151,10 +176,11 @@ function resume(v, delays) {
   }, delay);
 }
 
-// Lets iOS keep the video alive in PiP when going home from fullscreen. Batched: YouTube mutates the DOM constantly.
+// Lets iOS keep the video alive in PiP when going home from fullscreen. Part of background
+// playback, so only when that's on. Batched: YouTube mutates the DOM constantly.
 let scanQueued = false;
 new MutationObserver(() => {
-  if (scanQueued) return;
+  if (scanQueued || !settings.backgroundPlayback) return;
   scanQueued = true;
   setTimeout(() => {
     scanQueued = false;
@@ -186,7 +212,7 @@ function render() {
   const parts = [`rinse · page ${state.page}`, `pruned ${state.pruned}`, `ads skipped ${state.skipped}`];
   if (state.page !== "ok" && state.injectError) parts.push(`inject: ${state.injectError.slice(0, 60)}`);
   if (adActive) parts.push(`AD skip=${adDebug.skip} clicks=${adDebug.clicks} rate=${adDebug.rate} t=${adDebug.left}`);
-  if (state.resumed || state.failed) parts.push(`bg ${state.resumed}✓ ${state.failed}✗`);
+  parts.push(settings.backgroundPlayback ? `bg on ${state.resumed}✓ ${state.failed}✗` : "bg off");
   badge.firstChild.textContent = parts.join(" · ");
   badge.firstChild.style.background = ok ? "#16a34a" : state.page === "loading" ? "#555" : "#d97706";
 }

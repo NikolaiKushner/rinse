@@ -6,7 +6,8 @@ import vm from "node:vm";
 const listeners = [];
 const el = () => ({ style: {}, append() {}, set textContent(v) { this._t = v; }, get textContent() { return this._t; }, firstChild: null });
 class Doc {}
-Object.defineProperty(Doc.prototype, "hidden", { get: () => false, configurable: true });
+// The page is "really" hidden, so the spoofing (or its absence) is visible in the result.
+Object.defineProperty(Doc.prototype, "hidden", { get: () => true, configurable: true });
 const badgeEl = el(); badgeEl.firstChild = el();
 const document = Object.assign(new Doc(), {
   documentElement: { dataset: {} },
@@ -38,6 +39,12 @@ vm.runInContext(readFileSync(new URL("../../../Extensions/YouTube/Resources/page
 
 const pr = window.ytInitialPlayerResponse;
 const reported = JSON.parse(document.documentElement.dataset.rinsePage);
-const ok = !("adPlacements" in pr) && !("playerAds" in pr) && reported.pruned === 2;
+// Background playback follows the flag content.js sets from the app's setting.
+document.documentElement.dataset.rinseBackground = "0";
+const hiddenWhenOff = document.hidden;
+document.documentElement.dataset.rinseBackground = "1";
+const hiddenWhenOn = document.hidden;
+const ok = !("adPlacements" in pr) && !("playerAds" in pr) && reported.pruned === 2 && hiddenWhenOff === true && hiddenWhenOn === false;
+console.log("document.hidden with background off:", hiddenWhenOff, "on:", hiddenWhenOn);
 console.log(ok ? "PASS" : "FAIL", JSON.stringify(pr), "| data-rinse-page:", document.documentElement.dataset.rinsePage);
 process.exit(ok ? 0 : 1);

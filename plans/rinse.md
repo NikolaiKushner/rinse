@@ -151,7 +151,7 @@ filters/sources.json                URL, лицензии и закреплён�
 
 ### 7. PiP, фоновое воспроизведение, устойчивость — M · `[~]`
 
-> **Фон работает на iPhone (2026-10-24):** `content.js` глотает `visibilitychange`/`pagehide`/`blur`/`freeze` раньше YouTube и возобновляет видео, если iOS ставит паузу при уходе в фон (`bg 1✓ 0✗`). PiP-кнопка есть, но не проверена. Встроенные плееры (`/embed/`) не сделаны.
+> **Фон работает на iPhone (2026-10-24):** `content.js` глотает `visibilitychange`/`pagehide`/`blur`/`freeze` раньше YouTube и возобновляет видео, если iOS ставит паузу при уходе в фон (`bg 1✓ 0✗`). **С 2026-10-26 выключено по умолчанию:** переключатель в приложении (App Group `group.com.nikolaikushner.rinse` → `SafariWebExtensionHandler` → `background.js` → `content.js`, кэш в `storage.local`, флаг `data-rinse-background` для `page.js`). PiP-кнопка есть, но не проверена. Встроенные плееры (`/embed/`) не сделаны.
 
 
 - **Файлы:** `page.js` (`enablePip()` через `webkitSetPresentationMode`, удаление `disablePictureInPicture`; `keepAlive()` — подмена `document.hidden`/`visibilityState`, глушение `visibilitychange`/`pagehide`; `navigator.mediaSession` с названием и обложкой), `popup` или кнопка PiP в интерфейсе плеера, `manifest.json` (`youtube-nocookie.com`, встроенные `/embed/` в iframe на других сайтах).

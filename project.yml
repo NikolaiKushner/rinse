@@ -38,6 +38,10 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # App Group for settings shared with the YouTube extension (blockers don't need it).
+        "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": Config/macOS-shared.entitlements
+        "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": Config/iOS-shared.entitlements
+        "CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]": Config/iOS-shared.entitlements
     dependencies:
       - target: RinseYouTube_${platform}
       - target: RinseAds_${platform}
@@ -53,6 +57,7 @@ targets:
         excludes: ["Resources/**", "Info.plist"]
       - path: Extensions/YouTube/Resources
         buildPhase: resources
+      - Shared/Settings.swift
     info:
       path: Extensions/YouTube/Info.plist
       properties:
@@ -67,6 +72,10 @@ targets:
       base:
         PRODUCT_NAME: RinseYouTube
         PRODUCT_BUNDLE_IDENTIFIER: com.nikolaikushner.rinse.youtube
+        # App Group for settings shared with the YouTube extension (blockers don't need it).
+        "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": Config/macOS-shared.entitlements
+        "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": Config/iOS-shared.entitlements
+        "CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]": Config/iOS-shared.entitlements
 
   # Content Blockers for the whole web. Rules come from tools/filters/compile.py.
   RinseAds:

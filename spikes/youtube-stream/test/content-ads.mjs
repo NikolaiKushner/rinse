@@ -33,7 +33,10 @@ globalThis.MouseEvent = class { constructor(type) { this.type = type; } };
 const ctx = {
   document, console, performance, JSON,
   window: { addEventListener() {} },
-  browser: { runtime: { getURL: (p) => "safari-web-extension://x/" + p, sendMessage: async () => ({ ok: true }) } },
+  browser: {
+    runtime: { getURL: (p) => "safari-web-extension://x/" + p, sendMessage: async () => ({ ok: true }) },
+    storage: { local: { get: async () => ({}), set: async () => {} } },
+  },
   setTimeout: () => 0, setInterval: (fn) => intervals.push(fn),
   MutationObserver: class { observe() {} },
   HTMLVideoElement: class {},
