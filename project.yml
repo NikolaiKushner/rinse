@@ -28,6 +28,8 @@ targets:
     sources:
       - App
       - Shared
+      - path: Config/PrivacyInfo.xcprivacy
+        buildPhase: resources
     settings:
       base:
         PRODUCT_NAME: Rinse
@@ -61,6 +63,8 @@ targets:
       - Shared/Allowlist.swift
       - Shared/Extensions.swift
       - Shared/ContentBlockers.swift
+      - path: Config/PrivacyInfo.xcprivacy
+        buildPhase: resources
     info:
       path: Extensions/YouTube/Info.plist
       properties:
@@ -101,6 +105,8 @@ targetTemplates:
       - Extensions/Blockers/Shared
       - Shared/Settings.swift
       - Shared/Allowlist.swift
+      - path: Config/PrivacyInfo.xcprivacy
+        buildPhase: resources
     info:
       path: Extensions/Blockers/${name}/Info.plist
       properties:

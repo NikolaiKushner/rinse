@@ -73,6 +73,10 @@ flowchart LR
 
 What Safari can't express (regex rules, `$redirect`, scriptlets, procedural selectors) is dropped and counted. The output is verified with WebKit's own compiler, and each CSS selector is checked by WebKit, because a single invalid one would silently disable the 250 selectors batched with it.
 
+## Website
+
+[nikolaikushner.github.io/rinse](https://nikolaikushner.github.io/rinse/) · [Privacy Policy](https://nikolaikushner.github.io/rinse/privacy.html) · [Support](https://nikolaikushner.github.io/rinse/support.html) (also in [Russian](https://nikolaikushner.github.io/rinse/ru/)). The pages live in `site/` and are published by `.github/workflows/pages.yml` on every push to `main` that changes them.
+
 ## Build and run
 
 Requirements: Xcode 27+, [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`), and an Apple Developer team. The team ID is set in `project.yml`.
@@ -130,6 +134,8 @@ To see Rinse's state on a YouTube page, run `localStorage.setItem("rinse-debug",
 | `filters/` | `sources.json` (which lists go into which blocker), `rinse.txt` (our own rules), `invalid-selectors.txt` |
 | `tools/filters/` | Filter compiler, its tests, and WebKit-based validators |
 | `scripts/` | `run.sh`, `update-filters.sh`, icon generator |
+| `site/` | Website for GitHub Pages: landing, privacy policy, support (EN + RU) |
+| `Config/PrivacyInfo.xcprivacy` | Privacy manifest bundled in the app and every extension |
 | `plans/`, `docs/spikes/` | Implementation plan and research notes |
 | `spikes/` | Throwaway experiments and their tests, kept for reference |
 

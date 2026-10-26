@@ -214,7 +214,8 @@ filters/sources.json                URL, лицензии и закреплён�
 
 ## Решения по релизу
 
-- Политика конфиденциальности и страница поддержки — на GitHub Pages этого репозитория (решение пользователя, 2026-10-26).
+- Политика конфиденциальности и страница поддержки — на GitHub Pages этого репозитория (решение пользователя, 2026-10-26). **Сделано:** `site/` → `.github/workflows/pages.yml`. Ссылки для App Store Connect: Privacy Policy URL `https://nikolaikushner.github.io/rinse/privacy.html`, Support URL `https://nikolaikushner.github.io/rinse/support.html`, Marketing URL `https://nikolaikushner.github.io/rinse/`.
+- Privacy manifest: `Config/PrivacyInfo.xcprivacy` во всех 5 бандлах. Трекинга и сбора данных нет; единственный required-reason API — `UserDefaults` с причиной `1C8F.1` (App Group). В App Store Connect «App Privacy» отвечать «Data Not Collected».
 
 ## Открытые вопросы
 
