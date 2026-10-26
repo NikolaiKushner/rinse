@@ -27,5 +27,7 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).ContentBlockerRequestHandler</string>
 	</dict>
+	<key>NSHumanReadableDescription</key>
+	<string>Blocks ad networks on every site.</string>
 </dict>
 </plist>

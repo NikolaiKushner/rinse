@@ -94,6 +94,16 @@ scripts/run.sh ios     # build and install on a connected, unlocked iPhone or iP
 
 Or run `xcodegen generate && open Rinse.xcodeproj` and use the `Rinse_iOS` / `Rinse_macOS` schemes. `Rinse.xcodeproj` is generated and not committed.
 
+### Release to TestFlight
+
+```sh
+scripts/release.sh          # archive iOS + macOS, sign for App Store Connect, upload
+scripts/release.sh ios      # or one platform
+```
+
+Bump `CURRENT_PROJECT_VERSION` in `project.yml` before each upload: a build number can be used only once.
+Signing is automatic with the team in `project.yml` and the Apple ID signed in to Xcode.
+
 ### Turn the extensions on
 
 - **Mac:** Safari → Settings → Extensions → turn on all four Rinse extensions. Allow *Rinse for YouTube* on youtube.com.

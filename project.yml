@@ -91,13 +91,13 @@ targets:
   # Content Blockers for the whole web. Rules come from tools/filters/compile.py.
   RinseAds:
     templates: [ContentBlocker]
-    templateAttributes: { name: Ads, id: ads, title: Rinse Ads }
+    templateAttributes: { name: Ads, id: ads, title: Rinse Ads, desc: Blocks ad networks on every site. }
   RinsePrivacy:
     templates: [ContentBlocker]
-    templateAttributes: { name: Privacy, id: privacy, title: Rinse Privacy }
+    templateAttributes: { name: Privacy, id: privacy, title: Rinse Privacy, desc: Blocks trackers and analytics on every site. }
   RinseCosmetic:
     templates: [ContentBlocker]
-    templateAttributes: { name: Cosmetic, id: cosmetic, title: Rinse Page Cleaner }
+    templateAttributes: { name: Cosmetic, id: cosmetic, title: Rinse Page Cleaner, desc: Hides leftover ad slots and banners. }
 
 targetTemplates:
   ContentBlocker:
@@ -115,6 +115,8 @@ targetTemplates:
       path: Extensions/Blockers/${name}/Info.plist
       properties:
         CFBundleDisplayName: ${title}
+        # Required on macOS: App Store Connect rejects a content blocker without it.
+        NSHumanReadableDescription: ${desc}
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:

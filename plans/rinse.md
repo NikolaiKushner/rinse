@@ -179,7 +179,10 @@ filters/sources.json                URL, лицензии и закреплён�
 - **Проверка:** SwiftUI Previews на трёх размерах, `xcodebuild test -scheme Rinse` (тесты `Settings`/`Allowlist`), ручной прогон онбординга на симуляторе iPhone и iPad и на Mac.
 - **Зависит от:** 3 (после 8 — для allowlist). *Можно начинать параллельно с 5–7.*
 
-### 10. Готовность к App Store — S · `[ ]`
+### 10. Готовность к App Store — S · `[~]`
+
+> **2026-10-26:** запись в App Store Connect (Apple ID 6827144226, «Rinse: Ad Blocker for Safari»), карточка и заметки для ревью в `docs/appstore/`, 22 скриншота. Сборки **1.0 (1) iOS и macOS загружены в TestFlight** через `scripts/release.sh`. На macOS App Store Connect требует `NSHumanReadableDescription` у каждого блокера — добавлено. Осталось: внутреннее тестирование в TestFlight, заполнить карточку в App Store Connect, отправить на ревью.
+
 
 - **Файлы:** `App/Assets.xcassets/AppIcon`, `extension/icons/*` → `Extensions/YouTube/icons/*`, `App/PrivacyInfo.xcprivacy`, `docs/appstore/{description.ru.md,description.en.md,review-notes.md}`, `LICENSES.md` (EasyList и Fanboy — CC BY-SA 3.0, с атрибуцией).
 - **Что делает:** иконки, privacy manifest (данные не собираются), тексты, заметки для ревью. Формулировка — «альтернативный плеер и блокировщик контента», а не «обход рекламы YouTube». Затем архив и загрузка в TestFlight.
