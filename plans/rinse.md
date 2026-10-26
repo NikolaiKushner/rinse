@@ -169,7 +169,10 @@ filters/sources.json                URL, лицензии и закреплён�
 - **Проверка:** добавили сайт → после перезагрузки страницы реклама появилась, убрали → пропала. Unit-тест `AllowlistTests` (сериализация и сборка правила).
 - **Зависит от:** 5.
 
-### 9. Приложение на SwiftUI — M · `[ ]`
+### 9. Приложение на SwiftUI — M · `[x]`
+
+> **Итог (2026-10-26):** один экран-форма: шапка со статусом («Всё готово» / «Включите ещё N»), шаги настройки по платформе (сворачиваются, когда всё включено), расширения, YouTube, сайты-исключения, «О приложении» (поддержка и политика на сайте, на русском при русской системе). String Catalog `App/Localizable.xcstrings`, EN + RU с русскими формами множественного числа. iPad и Mac: колонка до 720 pt. Исправлено падение при запуске: одновременные первые вызовы `SFContentBlockerManager` (`_xpc_api_misuse`) — теперь все вызовы SafariServices на главном акторе, обновления статуса склеиваются. Скриншоты: `docs/screenshots/`.
+
 
 - **Файлы:** `App/Onboarding/{OnboardingView.swift,EnableStepsView.swift}`, `App/Status/StatusView.swift`, `App/Settings/{ListsView.swift,AllowlistView.swift,YouTubeSettingsView.swift}`, `Shared/Settings.swift`.
 - **Что делает:** онбординг с инструкцией включения. На iOS и iPadOS это «Настройки → Приложения → Safari → Расширения», на macOS — кнопка `SFSafariApplication.showPreferencesForExtension`. Экран статуса показывает, какой блокер и расширение включены. Есть переключатели списков, редактор allowlist и настройки YouTube (автоплей, скорость по умолчанию). Раскладка адаптивная: iPhone, iPad (`NavigationSplitView`), Mac.

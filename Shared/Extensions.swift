@@ -18,12 +18,13 @@ enum RinseExtension: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Localized in the app (App/Localizable.xcstrings); extensions don't show it.
     var subtitle: String {
         switch self {
-        case .youtube: "No ads on YouTube, optional background playback"
-        case .ads: "Blocks ad networks on every site"
-        case .privacy: "Blocks trackers and analytics"
-        case .cosmetic: "Hides leftover ad slots and banners"
+        case .youtube: String(localized: "No ads on YouTube, optional background playback")
+        case .ads: String(localized: "Blocks ad networks on every site")
+        case .privacy: String(localized: "Blocks trackers and analytics")
+        case .cosmetic: String(localized: "Hides leftover ad slots and banners")
         }
     }
 

@@ -1,0 +1,434 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "About": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "О приложении"
+          }
+        }
+      }
+    },
+    "Add": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить"
+          }
+        }
+      }
+    },
+    "All set. Safari is blocking ads.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Всё готово. Safari блокирует рекламу."
+          }
+        }
+      }
+    },
+    "Blocks ad networks on every site": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Блокирует рекламные сети на всех сайтах"
+          }
+        }
+      }
+    },
+    "Blocks trackers and analytics": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Блокирует трекеры и аналитику"
+          }
+        }
+      }
+    },
+    "Checking Safari…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверяем Safari…"
+          }
+        }
+      }
+    },
+    "Come back here: the status above updates by itself.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вернитесь сюда: статус наверху обновится сам."
+          }
+        }
+      }
+    },
+    "Extensions": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Расширения"
+          }
+        }
+      }
+    },
+    "Help and support": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Помощь и поддержка"
+          }
+        }
+      }
+    },
+    "Hides leftover ad slots and banners": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрывает пустые рекламные места и баннеры"
+          }
+        }
+      }
+    },
+    "In Safari, choose Safari → Settings → Extensions.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В Safari выберите Safari → Настройки → Расширения."
+          }
+        }
+      }
+    },
+    "In Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В Настройках"
+          }
+        }
+      }
+    },
+    "Keep playing in the background": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Воспроизведение в фоне"
+          }
+        }
+      }
+    },
+    "No ads on YouTube, optional background playback": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube без рекламы, воспроизведение в фоне по желанию"
+          }
+        }
+      }
+    },
+    "Off": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выкл."
+          }
+        }
+      }
+    },
+    "On": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вкл."
+          }
+        }
+      }
+    },
+    "Open Rinse for YouTube, turn it on and allow it on youtube.com.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Откройте Rinse for YouTube, включите его и разрешите на youtube.com."
+          }
+        }
+      }
+    },
+    "Open Safari Settings…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть настройки Safari…"
+          }
+        }
+      }
+    },
+    "Open Settings → Apps → Safari → Extensions.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Откройте Настройки → Приложения → Safari → Расширения."
+          }
+        }
+      }
+    },
+    "Privacy policy": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Политика конфиденциальности"
+          }
+        }
+      }
+    },
+    "Refresh now": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обновить"
+          }
+        }
+      }
+    },
+    "Refreshing…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обновляем…"
+          }
+        }
+      }
+    },
+    "Rinse": {
+      "shouldTranslate": false
+    },
+    "Rinse is off on these sites": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rinse выключен на этих сайтах"
+          }
+        }
+      }
+    },
+    "Rinse refreshes the rules every time it opens.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rinse обновляет правила при каждом запуске."
+          }
+        }
+      }
+    },
+    "Safari didn't load the rules: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Safari не загрузил правила: %@"
+          }
+        }
+      }
+    },
+    "Select Rinse for YouTube → Edit Websites, and set youtube.com to Allow.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выберите Rinse for YouTube → «Изменить веб-сайты» и для youtube.com поставьте «Разрешить»."
+          }
+        }
+      }
+    },
+    "Set up": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройка"
+          }
+        }
+      }
+    },
+    "Show setup steps": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать шаги настройки"
+          }
+        }
+      }
+    },
+    "Source code": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Исходный код"
+          }
+        }
+      }
+    },
+    "That doesn't look like a site address.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Это не похоже на адрес сайта."
+          }
+        }
+      }
+    },
+    "Turn Rinse back on for %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Снова включить Rinse на %@"
+          }
+        }
+      }
+    },
+    "Turn on %lld more extensions in Safari": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Turn on 1 more extension in Safari"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Turn on %lld more extensions in Safari"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Включите ещё %lld расширение в Safari"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Включите ещё %lld расширения в Safari"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Включите ещё %lld расширений в Safari"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Включите ещё %lld расширения в Safari"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Turn on Rinse Ads, Rinse Privacy and Rinse Page Cleaner.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включите Rinse Ads, Rinse Privacy и Rinse Page Cleaner."
+          }
+        }
+      }
+    },
+    "Turn on all four Rinse extensions.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включите все четыре расширения Rinse."
+          }
+        }
+      }
+    },
+    "Use this when a site breaks or you want to support it. Ads and trackers aren't blocked there, and subdomains are included. In Safari you can also use the Rinse button in the extensions menu.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пригодится, если сайт сломался или вы хотите его поддержать. Реклама и трекеры там не блокируются, поддомены тоже. В Safari то же самое делает кнопка Rinse в меню расширений."
+          }
+        }
+      }
+    },
+    "Version %@ · Rinse collects no data.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Версия %@ · Rinse не собирает данные."
+          }
+        }
+      }
+    },
+    "When off, YouTube pauses as usual when you leave Safari or lock the screen. Applies the next time a YouTube page loads.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда выключено, YouTube, как обычно, ставит паузу, если вы уходите из Safari или блокируете экран. Применяется при следующей загрузке страницы YouTube."
+          }
+        }
+      }
+    },
+    "YouTube": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube"
+          }
+        }
+      }
+    },
+    "example.com": {
+      "shouldTranslate": false
+    }
+  },
+  "version": "1.0"
+}

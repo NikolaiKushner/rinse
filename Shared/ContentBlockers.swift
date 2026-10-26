@@ -2,6 +2,9 @@ import SafariServices
 
 /// Asks Safari to recompile content blockers, e.g. after the allowlist changed or an app update
 /// shipped new lists. Used by the app and by the extension's native handler.
+/// Main actor: SFContentBlockerManager opens its XPC connection lazily, and two first calls from
+/// different threads crash the app (_xpc_api_misuse in xpc_connection_resume).
+@MainActor
 enum ContentBlockers {
     /// Returns Safari's error, nil if the rules loaded.
     static func reload(_ ext: RinseExtension) async -> String? {

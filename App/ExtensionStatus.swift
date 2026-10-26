@@ -5,6 +5,8 @@ private let logger = Logger(subsystem: "com.nikolaikushner.rinse", category: "bl
 
 /// Whether Safari has an extension turned on. `nil` means the OS gives no way to ask
 /// (Safari Web Extensions on iOS/iPadOS).
+/// Main actor for the same reason as ContentBlockers: SafariServices calls must not race.
+@MainActor
 enum ExtensionStatus {
     static func isEnabled(_ ext: RinseExtension) async -> Bool? {
         if ext.isContentBlocker {
