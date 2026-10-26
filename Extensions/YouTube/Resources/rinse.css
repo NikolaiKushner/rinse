@@ -1,0 +1,38 @@
+/* Injected by Safari with content.js (not subject to YouTube's CSP).
+   If an ad still starts, content.js mutes and skips it within a fraction of a second; this
+   keeps it from being seen meanwhile. Opacity, not display:none, so the Skip button stays
+   clickable and the player keeps its layout. */
+.html5-video-player.ad-showing video,
+.html5-video-player.ad-interrupting video,
+.html5-video-player.ad-showing .video-ads,
+.html5-video-player.ad-showing .ytp-ad-module,
+.html5-video-player.ad-showing .ytp-ad-player-overlay,
+.html5-video-player.ad-showing .ytp-ad-player-overlay-layout,
+.html5-video-player.ad-showing .ytp-ad-overlay-container {
+  opacity: 0 !important;
+}
+.html5-video-player.ad-showing {
+  background: #000 !important;
+}
+
+/* "Ad skipped" note: shown by content.js while YouTube holds the video back after a skipped or
+   pruned ad (it waits out roughly the ad's length server-side), so the player doesn't look frozen. */
+.rinse-wait {
+  position: absolute;
+  left: 50%;
+  bottom: 18%;
+  transform: translateX(-50%);
+  z-index: 70;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font: 500 13px/1.3 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+.rinse-wait.rinse-wait--on {
+  opacity: 1;
+}

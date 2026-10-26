@@ -16,7 +16,20 @@
         "*://*.youtube.com/*"
       ],
       "js": [
+        "page.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": [
         "content.js"
+      ],
+      "css": [
+        "rinse.css"
       ],
       "run_at": "document_start"
     }

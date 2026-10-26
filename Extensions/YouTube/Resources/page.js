@@ -7,6 +7,10 @@
 // still works if YouTube's CSP blocks this file.
 // Reports to content.js through <html data-rinse-page="…">. Logs with a [rinse] prefix.
 (() => {
+  // Safari may load this file several ways (manifest "world": "MAIN", registered content
+  // script, scripting.executeScript, <script src>). A Safari that ignores "world" runs it in
+  // the isolated world, where hooking YouTube is pointless: extension APIs exist only there.
+  if (typeof browser !== "undefined" && browser?.runtime?.id) return;
   const root = document.documentElement;
   if (root.dataset.rinsePage) return;
   const log = (...a) => console.log("[rinse]", ...a);
@@ -14,9 +18,14 @@
   const publish = () => { root.dataset.rinsePage = JSON.stringify(stats); };
   publish();
 
-  const AD_KEYS = ["adPlacements", "adSlots", "playerAds", "adBreakHeartbeatParams"];
+  // Not adBreakHeartbeatParams: without it the player waits ~4s before starting the video
+  // (3 of 4 runs in tools/youtube/keys.sh), while keeping it lets no ad through.
+  const AD_KEYS = ["adPlacements", "adSlots", "playerAds"];
   function prune(obj, source) {
     if (!obj || typeof obj !== "object") return obj;
+    // The real video's length lets content.js tell a separate ad video apart from the content.
+    const length = (obj.videoDetails || obj.playerResponse?.videoDetails)?.lengthSeconds;
+    if (length) root.dataset.rinseLength = String(length);
     let hit = 0;
     for (const target of [obj, obj.playerResponse]) {
       if (!target || typeof target !== "object") continue;

@@ -1,7 +1,8 @@
 // Content script: runs in Safari's isolated world at document_start on youtube.com.
 // YouTube's CSP can't block it, so everything that only needs the DOM lives here:
 //   - injects page.js (JSON ad pruning, visibility spoofing) and reports whether it ran
-//   - skips ads stitched into the stream: mute, 16x, press Skip
+//   - if an ad still starts: hide it (rinse.css), mute it, jump to its end or play it at 16x,
+//     press its Skip button
 //   - background playback, only when turned on in the Rinse app (off by default): hides
 //     "page went to the background" from YouTube and resumes the video if iOS pauses it
 //   - status badge and PiP button, only in debug mode:
@@ -95,18 +96,38 @@ function press(el) {
 }
 
 // Class names differ between www and m.youtube.com and change often, so the Skip button is
-// found by its label: any button-like element in the player whose text or aria-label says Skip.
-const SKIP_LABEL = /^(skip|пропустить|пропуск|überspringen|passer|saltar|salta|pular|pomiń)\b/i;
+// found by its label. It must sit in the ad UI: desktop YouTube also has a "Skip navigation"
+// button in the masthead, and pressing that every 250ms locks up the page.
+const SKIP_LABEL = /^(skip|пропустить|пропуск|überspringen|passer|saltar|salta|pular|pomiń)(\s+(ad|ads|рекламу))?\s*[▶›>⏭]?\s*$/i;
+const AD_UI = ".video-ads, .ytp-ad-module, [class*='ad-skip' i], [class*='skip-ad' i], [class*='ad-player' i], [id^='skip-button'], [class*='ytp-ad' i]";
 function findSkipButton(scope) {
   for (const el of scope.querySelectorAll("button, [role='button'], [class*='skip' i]")) {
     const label = (el.getAttribute("aria-label") || el.textContent || "").trim();
-    if (SKIP_LABEL.test(label) && el.offsetParent !== null) return el;
+    if (!SKIP_LABEL.test(label) || el.offsetParent === null) continue;
+    if (el.closest(AD_UI) || el.matches(AD_UI)) return el;
   }
   return null;
+}
+
+// A separate ad video (desktop) has its own short duration: jump to its end. An ad stitched
+// into the stream (m.youtube.com) shares the content's timeline, so seeking would skip the
+// video itself: play it at 16x instead. page.js publishes the real length; without page.js,
+// the watch page's <meta itemprop="duration" content="PT17M59S"> is the fallback.
+function contentLength() {
+  const fromPage = Number(root.dataset.rinseLength);
+  if (fromPage > 0) return fromPage;
+  const iso = document.querySelector("meta[itemprop='duration']")?.getAttribute("content") || "";
+  const m = iso.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
+  return m ? (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0) : 0;
+}
+function isSeparateAd(v) {
+  const length = contentLength();
+  return Number.isFinite(v.duration) && v.duration > 0 && length > 0 && Math.abs(v.duration - length) > 2;
 }
 const AD_PLAYER = ".html5-video-player.ad-showing, .html5-video-player.ad-interrupting";
 let adActive = false;
 let saved = null;
+let lastPressAt = -Infinity;
 
 function handleAds() {
   const player = document.querySelector(AD_PLAYER);
@@ -121,12 +142,19 @@ function handleAds() {
       render();
     }
     v.muted = true;
-    if (v.playbackRate !== 16) v.playbackRate = 16;
+    if (isSeparateAd(v)) {
+      if (v.currentTime < v.duration - 0.25) v.currentTime = v.duration - 0.1;
+    } else if (v.playbackRate !== 16) {
+      v.playbackRate = 16;
+    }
     // The ad UI isn't always inside the player element on m.youtube.com.
     const skip = findSkipButton(player) || findSkipButton(document);
+    // At most once a second: the button may still be counting down on the first try, and a
+    // stream of synthetic taps every 250ms can confuse the player.
     adDebug.skip = skip ? (skip.tagName.toLowerCase() + (skip.className ? "." + String(skip.className).split(" ")[0] : "")) : "none";
-    if (skip) {
+    if (skip && performance.now() - lastPressAt > 1000) {
       press(skip);
+      lastPressAt = performance.now();
       adDebug.clicks++;
     }
     adDebug.rate = v.playbackRate;
@@ -138,11 +166,40 @@ function handleAds() {
       v.muted = saved.muted;
       v.playbackRate = saved.rate === 16 ? 1 : saved.rate;
     }
+    lastPressAt = -Infinity;
     log("ad finished");
   }
 }
 setInterval(handleAds, 250);
 new MutationObserver(handleAds).observe(root, { attributes: true, attributeFilter: ["class"], subtree: true });
+
+// --- "Ad skipped" note -----------------------------------------------------------------------
+// After a pruned or skipped ad, YouTube holds the video back for about the ad's length (seen in
+// tools/youtube/try-youtube.swift: t stays at 0 while the player is "playing"). That can't be
+// avoided from the page, so say what's happening instead of leaving a frozen-looking player.
+// Only when Rinse actually removed or skipped an ad, so normal buffering never shows it.
+const WAIT_TEXT = /^ru|^uk|^be/i.test(globalThis.navigator?.language || "")
+  ? "Реклама пропущена · видео начнётся через мгновение"
+  : "Ad skipped · your video starts in a moment";
+let stalledSince = 0;
+let waitNote = null;
+function updateWaitNote() {
+  const player = document.querySelector(".html5-video-player");
+  const v = player?.querySelector("video");
+  const intervened = state.pruned > 0 || state.skipped > 0;
+  const holding = player && v && !adActive && intervened && !v.paused && v.currentTime < 0.3 &&
+    player.classList.contains("playing-mode");
+  stalledSince = holding ? stalledSince || performance.now() : 0;
+  const show = holding && performance.now() - stalledSince > 1000;
+  if (show && (!waitNote || !player.contains(waitNote))) {
+    waitNote = document.createElement("div");
+    waitNote.className = "rinse-wait";
+    waitNote.textContent = WAIT_TEXT;
+    player.append(waitNote);
+  }
+  waitNote?.classList.toggle("rinse-wait--on", !!show);
+}
+setInterval(updateWaitNote, 250);
 
 // --- Background playback -----------------------------------------------------------------
 // iOS pauses <video> when Safari goes to the background. Undo pauses that happen within
