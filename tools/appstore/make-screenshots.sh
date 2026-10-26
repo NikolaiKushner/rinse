@@ -1,6 +1,7 @@
 #!/bin/sh
 # Builds App Store screenshots from docs/appstore/raw into docs/appstore/screenshots/<lang>/.
-# Sizes: iPhone 6.9" 1320x2868, iPad 13" 2064x2752, Mac 2880x1800.
+# Sizes: iPhone 6.9" 1320x2868, iPhone 6.3" 1206x2622 (App Store Connect's "medium display" slot),
+# iPad 13" 2064x2752, Mac 2880x1800.
 # Raw shots (any that are missing are skipped):
 #   youtube-<device>-<lang>.png, popup-<device>-<lang>.png  ← drawn in docs/appstore/mocks/mock.html
 #   web-phone-before/after.png, web-mac-before/after.png    ← real site via tools/filters/try-url.swift
@@ -25,17 +26,18 @@ for lang in en ru; do
     t3="Выключается в одно касание";  t3mac="Выключается в один клик"; s3="Прямо из меню расширений Safari"
     t4="Настройка за минуту";         s4="Без аккаунта и сбора данных"
   fi
-  for device in iphone ipad mac; do
-    case $device in iphone) size=1320x2868 ;; ipad) size=2064x2752 ;; mac) size=2880x1800 ;; esac
+  for device in iphone iphone63 ipad mac; do
+    case $device in iphone) size=1320x2868 ;; iphone63) size=1206x2622 ;; ipad) size=2064x2752 ;; mac) size=2880x1800 ;; esac
     web=phone; [ $device = mac ] && web=mac
-    # iPad reuses the iPhone's video and popup shots.
-    src=$device; [ $device = ipad ] && src=iphone
+    # iPad and the 6.3" set reuse the iPhone's shots.
+    src=$device; [ $device = ipad ] || [ $device = iphone63 ] && src=iphone
+    app=$device; [ $device = iphone63 ] && app=iphone
     [ -f $raw/youtube-$src-$lang.png ] && frame --size $size --out $out/$device-1.png --title "$t1" --subtitle "$s1" --in $raw/youtube-$src-$lang.png
     [ -f $raw/web-$web-before.png ] && frame --size $size --out $out/$device-2.png --title "$t2" --subtitle "$s2" \
       --in $raw/web-$web-before.png --in $raw/web-$web-after.png --labels "$labels"
     t3d=$t3; [ $device = mac ] && t3d=$t3mac
     [ -f $raw/popup-$src-$lang.png ] && frame --size $size --out $out/$device-3.png --title "$t3d" --subtitle "$s3" --in $raw/popup-$src-$lang.png
-    [ -f $raw/app-$device-$lang.png ] && frame --size $size --out $out/$device-4.png --title "$t4" --subtitle "$s4" --in $raw/app-$device-$lang.png
+    [ -f $raw/app-$app-$lang.png ] && frame --size $size --out $out/$device-4.png --title "$t4" --subtitle "$s4" --in $raw/app-$app-$lang.png
   done
 done
 find docs/appstore/screenshots -name '*.png' | sort
