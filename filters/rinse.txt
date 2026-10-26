@@ -30,3 +30,39 @@ youtube.com##tp-yt-paper-dialog:has(ytd-enforcement-message-view-model)
 ##.brand-column-content
 ##[class*="col-left-350x800"]
 ##[class*="col-right-350x800"]
+!
+! Ad and analytics hosts that EasyList / EasyPrivacy / RU AdList don't cover (they target URL
+! patterns; these come from DNS-style lists). Found with tools/filters/match.py against
+! adblock.turtlecute.org, 2026-10-26. Deliberately NOT here: error reporting (Sentry, Bugsnag:
+! blocking them breaks sites) and phone-maker telemetry (web pages don't call it).
+! Ad networks
+||doubleclick.net^$third-party
+||afs.googlesyndication.com^
+||media.net^$third-party
+||adcolony.com^$third-party
+||unityads.unity3d.com^
+||ads.yahoo.com^
+||partnerads.ysm.yahoo.com^
+||gemini.yahoo.com^$third-party
+||adtech.yahooinc.com^
+||offerwall.yandex.net^
+||adfstat.yandex.ru^
+! Analytics
+||analytics.s3.amazonaws.com^
+||analyticsengine.s3.amazonaws.com^
+||click.googleanalytics.com^
+||analytics.query.yahoo.com^
+||udcm.yahoo.com^
+||log.fc.yahoo.com^
+||metrika.yandex.ru^$third-party
+||appmetrica.yandex.ru^$third-party
+! Ad and tracking subdomains of social networks (not the networks themselves)
+||an.facebook.com^
+||ads.tiktok.com^
+||ads-api.tiktok.com^
+||ads-sg.tiktok.com^
+||business-api.tiktok.com^$third-party
+||log.byteoversea.com^
+||ads-api.twitter.com^
+||ads.pinterest.com^
+||ads.youtube.com^
