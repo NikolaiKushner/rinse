@@ -53,4 +53,4 @@ Pass when:
   Not blocked: phone telemetry (Realme, Oppo, Apple, Xiaomi, Huawei) and error reporting, on purpose.
 - Regression, 12 sites (BBC, CNN, NYT, Reddit, Amazon, Wikipedia, Lenta, RIA, Avito, Ozon,
   GitHub, Apple): no content lost. NYT flagged at 8s, fine at 20s (right column loads slower).
-- iPad and Mac Safari by hand: not run yet.
+- By hand on iPhone, iPad and Mac Safari: **all OK** (checked by Nikolai, 2026-10-26).
