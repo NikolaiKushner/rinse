@@ -1,17 +1,18 @@
 /* Injected by Safari with content.js (not subject to YouTube's CSP).
    If an ad still starts, content.js mutes and skips it within a fraction of a second; this
    keeps it from being seen meanwhile. Opacity, not display:none, so the Skip button stays
-   clickable and the player keeps its layout. */
-.html5-video-player.ad-showing video,
-.html5-video-player.ad-interrupting video,
-.html5-video-player.ad-showing .video-ads,
-.html5-video-player.ad-showing .ytp-ad-module,
-.html5-video-player.ad-showing .ytp-ad-player-overlay,
-.html5-video-player.ad-showing .ytp-ad-player-overlay-layout,
-.html5-video-player.ad-showing .ytp-ad-overlay-container {
+   clickable and the player keeps its layout. Nothing applies when the user turned Rinse off
+   on youtube.com (content.js sets data-rinse-off). */
+html:not([data-rinse-off="1"]) .html5-video-player.ad-showing video,
+html:not([data-rinse-off="1"]) .html5-video-player.ad-interrupting video,
+html:not([data-rinse-off="1"]) .html5-video-player.ad-showing .video-ads,
+html:not([data-rinse-off="1"]) .html5-video-player.ad-showing .ytp-ad-module,
+html:not([data-rinse-off="1"]) .html5-video-player.ad-showing .ytp-ad-player-overlay,
+html:not([data-rinse-off="1"]) .html5-video-player.ad-showing .ytp-ad-player-overlay-layout,
+html:not([data-rinse-off="1"]) .html5-video-player.ad-showing .ytp-ad-overlay-container {
   opacity: 0 !important;
 }
-.html5-video-player.ad-showing {
+html:not([data-rinse-off="1"]) .html5-video-player.ad-showing {
   background: #000 !important;
 }
 

@@ -22,7 +22,8 @@
   // (3 of 4 runs in tools/youtube/keys.sh), while keeping it lets no ad through.
   const AD_KEYS = ["adPlacements", "adSlots", "playerAds"];
   function prune(obj, source) {
-    if (!obj || typeof obj !== "object") return obj;
+    // The user turned Rinse off on youtube.com: content.js sets this from the allowlist.
+    if (!obj || typeof obj !== "object" || root.dataset.rinseOff === "1") return obj;
     // The real video's length lets content.js tell a separate ad video apart from the content.
     const length = (obj.videoDetails || obj.playerResponse?.videoDetails)?.lengthSeconds;
     if (length) root.dataset.rinseLength = String(length);

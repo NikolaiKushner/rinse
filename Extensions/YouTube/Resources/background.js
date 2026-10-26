@@ -15,7 +15,9 @@ browser.runtime.onMessage.addListener((message, sender) => {
   }
   if (message?.type === "get-settings") {
     // Safari ignores the application id and always talks to the containing app's extension handler.
-    return browser.runtime.sendNativeMessage("com.nikolaikushner.rinse", { type: "getSettings" })
+    let host = "";
+    try { host = new URL(sender.tab?.url || "").hostname; } catch {}
+    return browser.runtime.sendNativeMessage("com.nikolaikushner.rinse", { type: "getSettings", host })
       .then((settings) => ({ ok: true, settings }), (error) => ({ ok: false, error: String(error?.message ?? error) }));
   }
 });

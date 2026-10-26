@@ -25,20 +25,15 @@ enum ExtensionStatus {
         #endif
     }
 
-    /// Makes Safari recompile a content blocker's rules, e.g. after an app update shipped new lists.
-    /// Returns Safari's error if it rejected the rules.
+    /// Makes Safari recompile a content blocker's rules. Returns Safari's error if it rejected them.
     static func reload(_ ext: RinseExtension) async -> String? {
-        guard ext.isContentBlocker else { return nil }
-        return await withCheckedContinuation { cont in
-            SFContentBlockerManager.reloadContentBlocker(withIdentifier: ext.rawValue) { error in
-                if let error {
-                    logger.error("reload \(ext.rawValue, privacy: .public) failed: \(String(describing: error), privacy: .public)")
-                } else {
-                    logger.info("reload \(ext.rawValue, privacy: .public) ok")
-                }
-                cont.resume(returning: error.map { ($0 as NSError).localizedDescription })
-            }
+        let error = await ContentBlockers.reload(ext)
+        if let error {
+            logger.error("reload \(ext.rawValue, privacy: .public) failed: \(error, privacy: .public)")
+        } else if ext.isContentBlocker {
+            logger.info("reload \(ext.rawValue, privacy: .public) ok")
         }
+        return error
     }
 
     #if os(macOS)

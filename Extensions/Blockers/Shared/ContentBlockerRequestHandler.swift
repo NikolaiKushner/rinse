@@ -6,7 +6,8 @@ import os
 
 private let logger = Logger(subsystem: "com.nikolaikushner.rinse", category: "blocker")
 
-/// Hands Safari the bundled rule list. Safari compiles it once and applies it without running our code.
+/// Hands Safari the bundled rule list, plus a last rule that turns everything off on the sites
+/// in the allowlist. Safari compiles it once and applies it without running our code.
 final class ContentBlockerRequestHandler: NSObject, NSExtensionRequestHandling {
     func beginRequest(with context: NSExtensionContext) {
         let bundle = Bundle.main.bundleIdentifier ?? "?"
@@ -16,12 +17,29 @@ final class ContentBlockerRequestHandler: NSObject, NSExtensionRequestHandling {
             context.cancelRequest(withError: CocoaError(.fileNoSuchFile))
             return
         }
-        let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
-        logger.info("\(bundle, privacy: .public): handing over blockerList.json (\(size) bytes)")
         let item = NSExtensionItem()
-        item.attachments = [provider]
+        item.attachments = [attachment(bundled: url, fallback: provider, bundle: bundle)]
         context.completeRequest(returningItems: [item]) { expired in
             logger.info("\(bundle, privacy: .public): request completed, expired=\(expired)")
         }
+    }
+
+    /// The bundled list as is, or a copy with the allowlist rule appended when the list isn't empty.
+    private func attachment(bundled url: URL, fallback: NSItemProvider, bundle: String) -> NSItemProvider {
+        let sites = Allowlist.domains
+        guard !sites.isEmpty, let rules = try? Data(contentsOf: url) else {
+            logger.info("\(bundle, privacy: .public): handing over blockerList.json, no allowlist")
+            return fallback
+        }
+        let merged = Allowlist.appendRule(to: rules, list: sites)
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("blockerList-\(bundle).json")
+        do {
+            try merged.write(to: out, options: .atomic)
+        } catch {
+            logger.error("\(bundle, privacy: .public): can't write merged list: \(String(describing: error), privacy: .public)")
+            return fallback
+        }
+        logger.info("\(bundle, privacy: .public): handing over blockerList.json + allowlist of \(sites.count) sites")
+        return NSItemProvider(contentsOf: out) ?? fallback
     }
 }

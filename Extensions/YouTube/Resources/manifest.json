@@ -51,11 +51,21 @@
     "persistent": false
   },
   "permissions": [
+    "activeTab",
     "nativeMessaging",
     "scripting",
     "storage"
   ],
   "host_permissions": [
     "*://*.youtube.com/*"
-  ]
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Rinse",
+    "default_icon": {
+      "48": "icon-48.png",
+      "96": "icon-96.png",
+      "128": "icon-128.png"
+    }
+  }
 }

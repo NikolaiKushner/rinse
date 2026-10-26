@@ -38,7 +38,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        # App Group for settings shared with the YouTube extension (blockers don't need it).
+        # App Group for settings shared with the extensions.
         "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": Config/macOS-shared.entitlements
         "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": Config/iOS-shared.entitlements
         "CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]": Config/iOS-shared.entitlements
@@ -58,6 +58,9 @@ targets:
       - path: Extensions/YouTube/Resources
         buildPhase: resources
       - Shared/Settings.swift
+      - Shared/Allowlist.swift
+      - Shared/Extensions.swift
+      - Shared/ContentBlockers.swift
     info:
       path: Extensions/YouTube/Info.plist
       properties:
@@ -72,7 +75,7 @@ targets:
       base:
         PRODUCT_NAME: RinseYouTube
         PRODUCT_BUNDLE_IDENTIFIER: com.nikolaikushner.rinse.youtube
-        # App Group for settings shared with the YouTube extension (blockers don't need it).
+        # App Group for settings shared with the extensions.
         "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": Config/macOS-shared.entitlements
         "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": Config/iOS-shared.entitlements
         "CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]": Config/iOS-shared.entitlements
@@ -96,6 +99,8 @@ targetTemplates:
       - path: Extensions/Blockers/${name}
         excludes: ["Info.plist"]
       - Extensions/Blockers/Shared
+      - Shared/Settings.swift
+      - Shared/Allowlist.swift
     info:
       path: Extensions/Blockers/${name}/Info.plist
       properties:
@@ -109,6 +114,10 @@ targetTemplates:
       base:
         PRODUCT_NAME: Rinse${name}
         PRODUCT_BUNDLE_IDENTIFIER: com.nikolaikushner.rinse.${id}
+        # App Group: the blockers read the allowlist the app and the Safari popup write.
+        "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": Config/macOS-shared.entitlements
+        "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": Config/iOS-shared.entitlements
+        "CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]": Config/iOS-shared.entitlements
         # Safari's content-blocker extension point needs a PlugInKit subsystem from the platform UI
         # framework; an unused Swift import gets dead-stripped, so link it explicitly.
         "OTHER_LDFLAGS[sdk=macosx*]": "$(inherited) -framework AppKit"

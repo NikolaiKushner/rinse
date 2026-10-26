@@ -159,7 +159,10 @@ filters/sources.json                URL, лицензии и закреплён�
 - **Проверка:** чек-лист шага 6 плюс PiP на iPhone, iPad и Mac, звук при заблокированном экране iPhone, встроенное видео на стороннем сайте.
 - **Зависит от:** 6.
 
-### 8. Allowlist и popup расширения — M · `[ ]`
+### 8. Allowlist и popup расширения — M · `[x]`
+
+> **Итог (2026-10-26):** `Shared/Allowlist.swift` (App Group `allowlist.domains`). Блокеры дописывают последним правило `ignore-previous-rules` с `if-domain` (байтовая склейка, без разбора 8 МБ JSON). Popup в меню расширений Safari (`activeTab`, домен вкладки видит только при открытии) → `setSite` в нативном обработчике → перезагрузка блокеров и вкладки. На youtube.com из allowlist `page.js`/`content.js`/`rinse.css` ничего не трогают (`data-rinse-off`). В приложении — раздел «Rinse is off on these sites». Тесты: `tools/tests/run-allowlist-tests.sh` (16 проверок, включая WebKit).
+
 
 - **Файлы:** `Extensions/YouTube/popup.{html,js,css}` (кнопка «Пауза на этом сайте» видна на любом сайте, если пользователь дал доступ, иначе только на YouTube), `SafariWebExtensionHandler.swift` (`toggleSite`), `Shared/Allowlist.swift`, `Extensions/Blockers/*/ContentBlockerRequestHandler.swift` (добавляет в конец правило `ignore-previous-rules` с `if-domain` из allowlist).
 - **Что делает:** сайт можно выключить из popup или из приложения. Блокеры перезагружаются через `SFContentBlockerManager.reloadContentBlocker`.
@@ -208,6 +211,10 @@ filters/sources.json                URL, лицензии и закреплён�
 ## Выпуск
 
 Внутренний TestFlight (свои устройства) → внешний TestFlight на 10–20 человек на 2 недели → App Store. Списки фильтров на старте обновляются только с релизами приложения. Признак успеха в проде — отзывы и самопроверка по чек-листу раз в неделю (YouTube ломает чаще, чем мы релизим). Аналитику не собираем: это часть позиционирования.
+
+## Решения по релизу
+
+- Политика конфиденциальности и страница поддержки — на GitHub Pages этого репозитория (решение пользователя, 2026-10-26).
 
 ## Открытые вопросы
 

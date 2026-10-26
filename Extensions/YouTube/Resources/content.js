@@ -14,16 +14,20 @@ const state = { page: "loading", pruned: 0, skipped: 0, resumed: 0, failed: 0 };
 const adDebug = { skip: "none", clicks: 0, rate: 1, left: "" };
 
 // --- Settings ------------------------------------------------------------------------------
+// siteOff: the user turned Rinse off on youtube.com (popup or app allowlist). Then nothing here
+// or in page.js touches the page; data-rinse-off tells page.js.
 // From the Rinse app, via background.js → native handler → App Group. The last known value is
 // cached in storage.local so it applies right away on the next page load. page.js reads it
 // from <html data-rinse-background>, because it runs in YouTube's world without extension APIs.
-const settings = { backgroundPlayback: false };
+const settings = { backgroundPlayback: false, siteOff: false };
 let settingsFresh = false;
 function applySettings(next, fresh) {
   if (!next || (settingsFresh && !fresh)) return;
   settingsFresh ||= fresh;
-  settings.backgroundPlayback = next.backgroundPlayback === true;
+  settings.siteOff = next.siteOff === true;
+  settings.backgroundPlayback = next.backgroundPlayback === true && !settings.siteOff;
   root.dataset.rinseBackground = settings.backgroundPlayback ? "1" : "0";
+  root.dataset.rinseOff = settings.siteOff ? "1" : "0";
   render();
 }
 root.dataset.rinseBackground = "0";
@@ -130,6 +134,7 @@ let saved = null;
 let lastPressAt = -Infinity;
 
 function handleAds() {
+  if (settings.siteOff) return;
   const player = document.querySelector(AD_PLAYER);
   const v = (player || document).querySelector("video");
   if (player && v) {
@@ -186,7 +191,7 @@ let waitNote = null;
 function updateWaitNote() {
   const player = document.querySelector(".html5-video-player");
   const v = player?.querySelector("video");
-  const intervened = state.pruned > 0 || state.skipped > 0;
+  const intervened = !settings.siteOff && (state.pruned > 0 || state.skipped > 0);
   const holding = player && v && !adActive && intervened && !v.paused && v.currentTime < 0.3 &&
     player.classList.contains("playing-mode");
   stalledSince = holding ? stalledSince || performance.now() : 0;

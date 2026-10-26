@@ -25,6 +25,7 @@ Rinse is a Safari extension app in the spirit of [Vinegar](https://andadinosaur.
 - **YouTube without ads.** Ads are cut out of the player data before they load. Anything that still slips through is muted, played at 16× and skipped automatically.
 - **Background playback, if you want it.** Turn on *Keep playing in the background* in the Rinse app, and the video keeps playing when you lock the screen or switch apps. Pausing from the Lock Screen still works. It's off by default, so YouTube pauses as usual.
 - **Ads and trackers blocked on every site.** Three Safari content blockers carry about 143,000 rules from EasyList, EasyPrivacy and RU AdList, plus Rinse's own rules.
+- **Off with one tap where you need it.** If a site breaks, or you want to support it, turn Rinse off there from Safari's extensions menu or in the app. Subdomains are included.
 - **Private by design.** The content blockers never see the pages you visit: Safari applies the rules itself. The YouTube extension only asks for access to `youtube.com`. Nothing is collected or sent anywhere.
 
 ## What's inside
@@ -105,6 +106,7 @@ tools/youtube/check.sh 3
 ```sh
 scripts/update-filters.sh                                                   # download + compile
 python3 -m unittest discover -s tools/filters                               # compiler tests
+tools/tests/run-allowlist-tests.sh                                          # allowlist, incl. WebKit
 swift tools/filters/validate.swift Extensions/Blockers/*/blockerList.json   # WebKit accepts the rules
 ```
 

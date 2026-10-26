@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var reloads: [RinseExtension: ReloadResult] = [:]
     @State private var reloading = false
     @AppStorage(RinseSettings.backgroundPlaybackKey, store: RinseSettings.store) private var backgroundPlayback = false
+    @State private var sites = Allowlist.domains
 
     var body: some View {
         NavigationStack {
@@ -34,6 +35,8 @@ struct ContentView: View {
                     Text("When off, YouTube pauses as usual when you leave Safari or lock the screen. Applies the next time a YouTube page loads.")
                 }
 
+                AllowlistSection(sites: $sites) { await reloadRules() }
+
                 Section("How to turn them on") {
                     ForEach(Array(Self.steps.enumerated()), id: \.offset) { i, step in
                         Label(step, systemImage: "\(i + 1).circle")
@@ -52,7 +55,11 @@ struct ContentView: View {
             await reloadRules()
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await refresh() } }
+            // The Safari popup may have changed the allowlist while the app was in the background.
+            if phase == .active {
+                sites = Allowlist.domains
+                Task { await refresh() }
+            }
         }
     }
 
