@@ -69,6 +69,7 @@ flowchart LR
 1. `page.js` runs in YouTube's own JS world and deletes the ad fields from player responses before the player reads them. It's injected through `scripting.executeScript`, because YouTube's CSP blocks a plain `<script src>`.
 2. If an ad still starts (for example, one stitched into the stream), `content.js` hides it with `rinse.css` and mutes it. A separate ad video jumps straight to its end; a stitched one plays at 16×. Then the ad's own Skip button gets pressed, found by its label inside the ad UI.
    After a removed or skipped ad, YouTube holds the video back server-side for about the ad's length. That can't be avoided from the page, so a small "Ad skipped · your video starts in a moment" note is shown instead of a frozen-looking player.
+   YouTube's "Ad blockers are not allowed" popup pauses the video and dims the page. `page.js` prunes it from the player response; if it still opens, `rinse.css` hides it together with its backdrop and `content.js` resumes the video.
 3. Background playback is off by default. The app stores the setting in an App Group, the extension's native handler reads it, and `content.js` caches it in `storage.local` and sets `<html data-rinse-background>` for `page.js`. When it's on, `content.js` swallows `visibilitychange`, `pagehide`, `blur` and `freeze` before YouTube sees them, `page.js` reports the page as visible, and if iOS still pauses the video while going to the background, it's resumed.
 
 **Everything else.** `tools/filters/compile.py` converts Adblock Plus syntax into Safari's content-blocker JSON:
@@ -113,7 +114,7 @@ Open the Rinse app once after installing or updating, so Safari reloads the rule
 
 ### Check YouTube on Mac WebKit
 
-`tools/youtube/try-youtube.swift` plays a real YouTube video in a `WKWebView` with Rinse's scripts and prints a per-second timeline: is an ad showing, is it hidden, does the video advance. `tools/youtube/check.sh` runs it several times on videos known to show ads. Run it before a release; with full Rinse you want `ad=0s`, and any stall should be covered by the note (`silentStall` ≤ 1s).
+`tools/youtube/try-youtube.swift` plays a real YouTube video in a `WKWebView` with Rinse's scripts and prints a per-second timeline: is an ad showing, is it hidden, does the video advance. `tools/youtube/check.sh` runs it several times on videos known to show ads; `--fake-popup N` opens a stand-in for the ad blocker popup at second N, to check that Rinse hides it and resumes the video. Run it before a release; with full Rinse you want `ad=0s`, and any stall should be covered by the note (`silentStall` ≤ 1s).
 
 ```sh
 swift tools/youtube/try-youtube.swift oufxWa84Fxk             # full Rinse

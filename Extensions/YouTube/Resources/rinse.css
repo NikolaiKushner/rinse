@@ -16,6 +16,13 @@ html:not([data-rinse-off="1"]) .html5-video-player.ad-showing {
   background: #000 !important;
 }
 
+/* "Ad blockers are not allowed" popup (fallback for page.js pruning it): hide the popup and the
+   backdrop YouTube dims the page with. Hiding only the popup leaves a dimmed, frozen-looking page. */
+html:not([data-rinse-off="1"]) tp-yt-paper-dialog:has(ytd-enforcement-message-view-model),
+html:not([data-rinse-off="1"]):has(ytd-enforcement-message-view-model) tp-yt-iron-overlay-backdrop {
+  display: none !important;
+}
+
 /* "Ad skipped" note: shown by content.js while YouTube holds the video back after a skipped or
    pruned ad (it waits out roughly the ad's length server-side), so the player doesn't look frozen. */
 .rinse-wait {

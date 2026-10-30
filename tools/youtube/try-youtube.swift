@@ -14,6 +14,19 @@ let videoId = args.count > 1 ? args[1] : "dQw4w9WgXcQ"
 let noRinse = args.contains("--no-rinse")
 let noPage = args.contains("--no-page")
 let seconds = args.firstIndex(of: "--seconds").flatMap { Int(args[$0 + 1]) } ?? 45
+// --fake-popup N: at second N, open a stand-in for YouTube's "Ad blockers are not allowed" popup
+// (dialog + opened backdrop) and pause the video, like YouTube does. Rinse should hide both and resume.
+let fakePopupAt = args.firstIndex(of: "--fake-popup").flatMap { Int(args[$0 + 1]) }
+let fakePopup = """
+const d = document.createElement('tp-yt-paper-dialog');
+d.append(document.createElement('ytd-enforcement-message-view-model'));
+d.style.cssText = 'display:block;position:fixed;inset:30%;background:#fff;z-index:2202';
+const b = document.createElement('tp-yt-iron-overlay-backdrop');
+b.className = 'opened';
+b.style.cssText = 'display:block;position:fixed;inset:0;background:#000;opacity:.6;z-index:2201';
+document.body.append(b, d);
+document.querySelector('video')?.pause();
+"""
 // --keys a,b,c replaces page.js's AD_KEYS, to find which pruned field YouTube reacts to.
 let keys = args.firstIndex(of: "--keys").map { args[$0 + 1].split(separator: ",").map { "\"\($0)\"" }.joined(separator: ", ") }
 let resources = URL(fileURLWithPath: "Extensions/YouTube/Resources")
@@ -51,6 +64,7 @@ return JSON.stringify({
   pruned: page ? JSON.parse(page).pruned : null,
   len: document.documentElement.dataset.rinseLength || null,
   note: !!document.querySelector('.rinse-wait--on'),
+  popup: [...document.querySelectorAll('tp-yt-paper-dialog, tp-yt-iron-overlay-backdrop')].some(e => getComputedStyle(e).display !== 'none'),
   skip: [...document.querySelectorAll('.video-ads button, .ytp-ad-module button, [class*="skip" i]')].map(e => (e.className || e.tagName).toString().slice(0, 40) + ':' + (e.offsetParent ? 'vis' : 'hid')).slice(0, 3).join(' | '),
 });
 """
@@ -89,6 +103,7 @@ Task { @MainActor in
     var firstProgress: Int? = nil  // second at which the main video first advanced past 0.5s
     for second in 1...seconds {
         try await Task.sleep(for: .seconds(1))
+        if second == fakePopupAt { _ = try? await web.callAsyncJavaScript(fakePopup, contentWorld: .page) }
         guard let json = try? await web.callAsyncJavaScript(probe, contentWorld: .page) as? String,
               let d = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any] else {
             print(String(format: "%3ds  (page not ready)", second)); continue
@@ -104,8 +119,9 @@ Task { @MainActor in
         let note = d["note"] as? Bool ?? false
         if note { noteSeconds += 1 }
         if stuck >= 1 && !note && !ad { silentStallSeconds += 1 }
-        print(String(format: "%3ds  %@%@ t=%@ dur=%@ %@ rate=%@ muted=%@ opacity=%@ %@ %@ pruned=%@ len=%@ %@%@",
-                     second, ad ? "AD " : "   ", note ? "NOTE " : "", "\(d["t"] ?? "-")", "\(d["dur"] ?? "-")", paused ? "paused " : "playing",
+        let popup = d["popup"] as? Bool ?? false
+        print(String(format: "%3ds  %@%@%@ t=%@ dur=%@ %@ rate=%@ muted=%@ opacity=%@ %@ %@ pruned=%@ len=%@ %@%@",
+                     second, ad ? "AD " : "   ", note ? "NOTE " : "", popup ? "POPUP " : "", "\(d["t"] ?? "-")", "\(d["dur"] ?? "-")", paused ? "paused " : "playing",
                      "\(d["rate"] ?? "-")", "\(d["muted"] ?? "-")", "\(d["opacity"] ?? "-")", "\(d["state"] ?? "")",
                      (d["adText"] as? String).map { $0.isEmpty ? "" : "[\($0)]" } ?? "", "\(d["pruned"] ?? "-")", "\(d["len"] ?? "-")", ad ? "skip{\(d["skip"] ?? "")}" : "",
                      stuck >= 3 ? "  ⚠︎ STUCK" : ""))

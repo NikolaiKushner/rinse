@@ -31,6 +31,14 @@
     for (const target of [obj, obj.playerResponse]) {
       if (!target || typeof target !== "object") continue;
       for (const k of AD_KEYS) if (k in target) { delete target[k]; hit++; }
+      // The "Ad blockers are not allowed" popup: YouTube pauses the video and dims the page
+      // under it. The Cosmetic blocker hides the popup, which leaves a frozen, dimmed player.
+      const messages = target.auxiliaryUi?.messageRenderers;
+      if (messages && "enforcementMessageViewModel" in messages) {
+        delete messages.enforcementMessageViewModel;
+        hit++;
+        log("pruned the ad blocker popup from " + source);
+      }
     }
     if (hit) {
       stats.pruned += hit;

@@ -206,6 +206,38 @@ function updateWaitNote() {
 }
 setInterval(updateWaitNote, 250);
 
+// --- "Ad blockers are not allowed" popup ---------------------------------------------------
+// page.js prunes it from the player response; this is the fallback. When it opens, YouTube
+// pauses the video and dims the page with a backdrop. rinse.css hides the popup and the backdrop
+// (the Cosmetic blocker only hides the popup, which used to leave a frozen, dimmed player);
+// here the video is resumed if YouTube paused it as the popup opened.
+const ENFORCEMENT = "ytd-enforcement-message-view-model";
+let lastAnyPause = null;
+let enforcedAt = 0;
+document.addEventListener("pause", (e) => {
+  if (!(e.target instanceof HTMLVideoElement)) return;
+  lastAnyPause = { v: e.target, t: performance.now() };
+  if (performance.now() - enforcedAt < 3000) resumeAfterPopup();
+}, true);
+function resumeAfterPopup() {
+  const pause = lastAnyPause;
+  if (settings.siteOff || !pause || !pause.v.paused || pause.v.ended || performance.now() - pause.t > 3000) return;
+  log("video paused by the ad blocker popup, resuming");
+  resume(pause.v, [0, 250, 1000]);
+}
+setInterval(() => {
+  const open = !!document.querySelector(ENFORCEMENT) && !!document.querySelector("tp-yt-iron-overlay-backdrop.opened");
+  if (open && !enforcedAt) {
+    enforcedAt = performance.now();
+    state.enforced = (state.enforced || 0) + 1;
+    log("ad blocker popup opened");
+    resumeAfterPopup();
+    render();
+  } else if (!open) {
+    enforcedAt = 0;
+  }
+}, 250);
+
 // --- Background playback -----------------------------------------------------------------
 // iOS pauses <video> when Safari goes to the background. Undo pauses that happen within
 // 2s of going hidden; later ones (lock screen, Control Center) are the user's and stay.
@@ -273,6 +305,7 @@ function render() {
   const ok = state.page === "ok";
   const parts = [`rinse · page ${state.page}`, `pruned ${state.pruned}`, `ads skipped ${state.skipped}`];
   if (state.page !== "ok" && state.injectError) parts.push(`inject: ${state.injectError.slice(0, 60)}`);
+  if (state.enforced) parts.push(`popup ${state.enforced}`);
   if (adActive) parts.push(`AD skip=${adDebug.skip} clicks=${adDebug.clicks} rate=${adDebug.rate} t=${adDebug.left}`);
   parts.push(settings.backgroundPlayback ? `bg on ${state.resumed}✓ ${state.failed}✗` : "bg off");
   badge.firstChild.textContent = parts.join(" · ");
