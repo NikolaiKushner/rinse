@@ -16,10 +16,10 @@ html:not([data-rinse-off="1"]) .html5-video-player.ad-showing {
   background: #000 !important;
 }
 
-/* "Ad blockers are not allowed" popup (fallback for page.js pruning it): hide the popup and the
-   backdrop YouTube dims the page with. Hiding only the popup leaves a dimmed, frozen-looking page. */
-html:not([data-rinse-off="1"]) tp-yt-paper-dialog:has(ytd-enforcement-message-view-model),
-html:not([data-rinse-off="1"]):has(ytd-enforcement-message-view-model) tp-yt-iron-overlay-backdrop {
+/* "Ad blockers are not allowed" popup (fallback for page.js pruning it). Only the popup: its
+   backdrop is removed by content.js, because a backdrop left behind a hidden dialog never closes
+   and blocks every click on the page. */
+html:not([data-rinse-off="1"]) tp-yt-paper-dialog:has(ytd-enforcement-message-view-model) {
   display: none !important;
 }
 

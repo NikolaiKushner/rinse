@@ -16,16 +16,24 @@ let noPage = args.contains("--no-page")
 let seconds = args.firstIndex(of: "--seconds").flatMap { Int(args[$0 + 1]) } ?? 45
 // --fake-popup N: at second N, open a stand-in for YouTube's "Ad blockers are not allowed" popup
 // (dialog + opened backdrop) and pause the video, like YouTube does. Rinse should hide both and resume.
+// --orphan: the dialog is already display:none (as the Cosmetic blocker leaves it) and gets removed
+// 1.5s later, like a closed dialog; the backdrop stays, as iron-overlay leaves it. Seen in Safari:
+// a dimmed page where only the keyboard works.
+// --plain: an ordinary dialog (no enforcement message), like Share. Rinse must leave it alone.
 let fakePopupAt = args.firstIndex(of: "--fake-popup").flatMap { Int(args[$0 + 1]) }
+let orphan = args.contains("--orphan")
+let plain = args.contains("--plain")
 let fakePopup = """
 const d = document.createElement('tp-yt-paper-dialog');
-d.append(document.createElement('ytd-enforcement-message-view-model'));
-d.style.cssText = 'display:block;position:fixed;inset:30%;background:#fff;z-index:2202';
+d.setAttribute('opened', '');
+if (!\(plain)) d.append(document.createElement('ytd-enforcement-message-view-model'));
+d.style.cssText = 'display:\(orphan ? "none" : "block");position:fixed;inset:30%;background:#fff;z-index:2202';
 const b = document.createElement('tp-yt-iron-overlay-backdrop');
 b.className = 'opened';
 b.style.cssText = 'display:block;position:fixed;inset:0;background:#000;opacity:.6;z-index:2201';
 document.body.append(b, d);
 document.querySelector('video')?.pause();
+if (\(orphan)) setTimeout(() => d.remove(), 1500);
 """
 // --keys a,b,c replaces page.js's AD_KEYS, to find which pruned field YouTube reacts to.
 let keys = args.firstIndex(of: "--keys").map { args[$0 + 1].split(separator: ",").map { "\"\($0)\"" }.joined(separator: ", ") }
@@ -65,6 +73,8 @@ return JSON.stringify({
   len: document.documentElement.dataset.rinseLength || null,
   note: !!document.querySelector('.rinse-wait--on'),
   popup: [...document.querySelectorAll('tp-yt-paper-dialog, tp-yt-iron-overlay-backdrop')].some(e => getComputedStyle(e).display !== 'none'),
+  // What a click in the middle of the player would land on: the video, or a backdrop over it.
+  hit: (() => { const r = document.querySelector('video')?.getBoundingClientRect(); if (!r) return '-'; const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return e ? e.tagName.toLowerCase() : '-'; })(),
   skip: [...document.querySelectorAll('.video-ads button, .ytp-ad-module button, [class*="skip" i]')].map(e => (e.className || e.tagName).toString().slice(0, 40) + ':' + (e.offsetParent ? 'vis' : 'hid')).slice(0, 3).join(' | '),
 });
 """
@@ -121,7 +131,7 @@ Task { @MainActor in
         if stuck >= 1 && !note && !ad { silentStallSeconds += 1 }
         let popup = d["popup"] as? Bool ?? false
         print(String(format: "%3ds  %@%@%@ t=%@ dur=%@ %@ rate=%@ muted=%@ opacity=%@ %@ %@ pruned=%@ len=%@ %@%@",
-                     second, ad ? "AD " : "   ", note ? "NOTE " : "", popup ? "POPUP " : "", "\(d["t"] ?? "-")", "\(d["dur"] ?? "-")", paused ? "paused " : "playing",
+                     second, ad ? "AD " : "   ", note ? "NOTE " : "", popup ? "POPUP hit=\(d["hit"] ?? "-") " : "", "\(d["t"] ?? "-")", "\(d["dur"] ?? "-")", paused ? "paused " : "playing",
                      "\(d["rate"] ?? "-")", "\(d["muted"] ?? "-")", "\(d["opacity"] ?? "-")", "\(d["state"] ?? "")",
                      (d["adText"] as? String).map { $0.isEmpty ? "" : "[\($0)]" } ?? "", "\(d["pruned"] ?? "-")", "\(d["len"] ?? "-")", ad ? "skip{\(d["skip"] ?? "")}" : "",
                      stuck >= 3 ? "  ⚠︎ STUCK" : ""))

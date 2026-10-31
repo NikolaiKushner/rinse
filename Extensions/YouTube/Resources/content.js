@@ -208,12 +208,18 @@ setInterval(updateWaitNote, 250);
 
 // --- "Ad blockers are not allowed" popup ---------------------------------------------------
 // page.js prunes it from the player response; this is the fallback. When it opens, YouTube
-// pauses the video and dims the page with a backdrop. rinse.css hides the popup and the backdrop
-// (the Cosmetic blocker only hides the popup, which used to leave a frozen, dimmed player);
-// here the video is resumed if YouTube paused it as the popup opened.
+// pauses the video and dims the page with tp-yt-iron-overlay-backdrop, which all of YouTube's
+// dialogs share. rinse.css hides the popup; here the video is resumed if YouTube paused it as
+// the popup opened.
+// The backdrop needs more than CSS. A dialog hidden with display:none (the Cosmetic blocker, or
+// rinse.css) never fires the transitionend iron-overlay waits for on close, so the backdrop
+// stays "opened" over the whole page after the dialog is gone: the page looks dimmed and no
+// click lands, only the keyboard works. So any opened backdrop with no displayed dialog over it
+// is removed, after a short grace for a real dialog that is still opening.
 const ENFORCEMENT = "ytd-enforcement-message-view-model";
 let lastAnyPause = null;
 let enforcedAt = 0;
+let orphanSince = 0;
 document.addEventListener("pause", (e) => {
   if (!(e.target instanceof HTMLVideoElement)) return;
   lastAnyPause = { v: e.target, t: performance.now() };
@@ -225,17 +231,32 @@ function resumeAfterPopup() {
   log("video paused by the ad blocker popup, resuming");
   resume(pause.v, [0, 250, 1000]);
 }
+// Dialogs are position:fixed, so offsetParent is null even when shown; getClientRects() is empty
+// only for display:none.
+const displayed = (el) => el.getClientRects().length > 0;
 setInterval(() => {
-  const open = !!document.querySelector(ENFORCEMENT) && !!document.querySelector("tp-yt-iron-overlay-backdrop.opened");
-  if (open && !enforcedAt) {
+  if (settings.siteOff) return;
+  const enforcement = document.querySelector(ENFORCEMENT);
+  if (enforcement && !enforcedAt) {
     enforcedAt = performance.now();
     state.enforced = (state.enforced || 0) + 1;
     log("ad blocker popup opened");
     resumeAfterPopup();
     render();
-  } else if (!open) {
+  } else if (!enforcement) {
     enforcedAt = 0;
   }
+  const backdrop = document.querySelector("tp-yt-iron-overlay-backdrop.opened");
+  const dialogOpen = backdrop && [...document.querySelectorAll("[opened]")].some((el) => el !== backdrop && displayed(el));
+  if (!backdrop || dialogOpen) { orphanSince = 0; return; }
+  orphanSince ||= performance.now();
+  if (performance.now() - orphanSince < 500) return;
+  log("removing a backdrop with no dialog over it");
+  backdrop.remove();
+  orphanSince = 0;
+  state.backdrops = (state.backdrops || 0) + 1;
+  resumeAfterPopup();
+  render();
 }, 250);
 
 // --- Background playback -----------------------------------------------------------------
@@ -306,6 +327,7 @@ function render() {
   const parts = [`rinse · page ${state.page}`, `pruned ${state.pruned}`, `ads skipped ${state.skipped}`];
   if (state.page !== "ok" && state.injectError) parts.push(`inject: ${state.injectError.slice(0, 60)}`);
   if (state.enforced) parts.push(`popup ${state.enforced}`);
+  if (state.backdrops) parts.push(`backdrop ${state.backdrops}`);
   if (adActive) parts.push(`AD skip=${adDebug.skip} clicks=${adDebug.clicks} rate=${adDebug.rate} t=${adDebug.left}`);
   parts.push(settings.backgroundPlayback ? `bg on ${state.resumed}✓ ${state.failed}✗` : "bg off");
   badge.firstChild.textContent = parts.join(" · ");
